@@ -28,22 +28,16 @@ void SerialThreadObject::serialLoop()
 
 	boost::posix_time::ptime t1(boost::posix_time::second_clock::local_time());
     int64_t delay(0);
-	int delayCount(0);
 	int cmdIndex(0);
 	while (active)
 	{
 		if(ss->dataAvailable())
 		{
-			
 			CatheterChannelCmd incomingData;
 			boost::mutex::scoped_lock lock(threadMutex);
 			comStatus newCom(ss->getData(commandFromArd.commandList));
 			lock.unlock();
-			//std::string comString(comStat2String(newCom));
-			//if(textStatus != NULL)
-			//{
-			//	textStatus->addText(std::string("received Command\n\t")+comString);
-			//}
+			printf("recieved command: \n");
 			if(newCom == valid)
 			{
 				if(statusGridData != NULL)
@@ -51,23 +45,20 @@ void SerialThreadObject::serialLoop()
 					statusGridData->updateCmdList(commandFromArd.commandList);
 				}
 			}
-  
 		}
 		// This is a fifo command
 		// warning: no lock is used to read the vector size.
 		if (commandsToArd.size() > 0) 
 		{
 			boost::posix_time::time_duration diff(boost::posix_time::microsec_clock::local_time() - t1);
-			delayCount++;
 			int64_t diffAmt(diff.total_nanoseconds());
 			if (diffAmt > delay)
 			{
 				// send the first command
-				printf("Sending command: \n");
 				t1 = boost::posix_time::microsec_clock::local_time();
 				boost::mutex::scoped_lock lock(threadMutex);
-				ss->sendCommand(commandsToArd[0],cmdIndex);
-				delayCount = 0 ;
+				int writeOut(ss->sendCommand(commandsToArd[0],cmdIndex));
+				printf("Sent %d bytes", writeOut);
 				delay = commandsToArd[0].delayTime*1000000;
 				commandsToArd.erase(commandsToArd.begin());
 				
@@ -75,8 +66,7 @@ void SerialThreadObject::serialLoop()
 				cmdIndex++;
 			}
 		}
-		boost::this_thread::sleep(boost::posix_time::microseconds(1))
-			; //  milliseconds(PAUSE_INC_MS));
+		boost::this_thread::sleep(boost::posix_time::microseconds(1));
 	}
 }
 

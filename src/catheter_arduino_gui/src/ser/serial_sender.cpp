@@ -209,14 +209,19 @@ bool CatheterSerialSender::connected()
 	else return true;
 }
 
-void CatheterSerialSender::sendCommand(const CatheterChannelCmdSet & outgoingData, int pseqnum)
+int CatheterSerialSender::sendCommand(const CatheterChannelCmdSet & outgoingData, int pseqnum)
 {
 	// parse the command:
 	std::vector< uint8_t > bytesOut(encodeCommandSet(outgoingData, pseqnum));
 	if (connected())
 	{
 		// send it through the serial port:
-		sp->write_some_bytes(bytesOut, bytesOut.size());
+		return static_cast<int> (sp->write_some_bytes(bytesOut, bytesOut.size()));
+	}
+	else
+	{
+		printf("not connected");
+		return 0;
 	}
 }
 
