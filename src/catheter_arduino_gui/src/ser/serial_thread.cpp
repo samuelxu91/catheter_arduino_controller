@@ -37,7 +37,7 @@ void SerialThreadObject::serialLoop()
 			boost::mutex::scoped_lock lock(threadMutex);
 			comStatus newCom(ss->getData(commandFromArd.commandList));
 			lock.unlock();
-			printf("recieved command: ");
+			printf("recieved command: \n");
 			if(newCom == valid)
 			{
 				printf("valid\n");
@@ -45,10 +45,6 @@ void SerialThreadObject::serialLoop()
 				{
 					statusGridData->updateCmdList(commandFromArd.commandList);
 				}
-			}
-			else
-			{
-				printf("invalid\n");
 			}
 		}
 		// This is a fifo command
