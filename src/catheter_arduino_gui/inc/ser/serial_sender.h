@@ -36,14 +36,13 @@ public:
 	bool resetStop();
 	
 	bool sendReset();
-	//bool runPlayfile(const std::vector<CatheterChannelCmd>& cmds, std::vector<CatheterChannelCmd>& cmdsReturned);
 
 	bool connected();
 
 	bool dataAvailable();
 	comStatus getData(std::vector< CatheterChannelCmd > &);
 
-	void sendCommand(const CatheterChannelCmdSet &, int);
+	int sendCommand(const CatheterChannelCmdSet &, int);
 };
 
 

@@ -28,46 +28,42 @@ void SerialThreadObject::serialLoop()
 
 	boost::posix_time::ptime t1(boost::posix_time::second_clock::local_time());
     int64_t delay(0);
-	int delayCount(0);
 	int cmdIndex(0);
 	while (active)
 	{
 		if(ss->dataAvailable())
 		{
-			
 			CatheterChannelCmd incomingData;
 			boost::mutex::scoped_lock lock(threadMutex);
 			comStatus newCom(ss->getData(commandFromArd.commandList));
 			lock.unlock();
-			//std::string comString(comStat2String(newCom));
-			//if(textStatus != NULL)
-			//{
-			//	textStatus->addText(std::string("received Command\n\t")+comString);
-			//}
+			printf("recieved command: ");
 			if(newCom == valid)
 			{
+				printf("valid\n");
 				if(statusGridData != NULL)
 				{
 					statusGridData->updateCmdList(commandFromArd.commandList);
 				}
 			}
-  
+			else
+			{
+				printf("invalid\n");
+			}
 		}
 		// This is a fifo command
 		// warning: no lock is used to read the vector size.
 		if (commandsToArd.size() > 0) 
 		{
 			boost::posix_time::time_duration diff(boost::posix_time::microsec_clock::local_time() - t1);
-			delayCount++;
 			int64_t diffAmt(diff.total_nanoseconds());
 			if (diffAmt > delay)
 			{
 				// send the first command
-				printf("Sending command: \n");
 				t1 = boost::posix_time::microsec_clock::local_time();
 				boost::mutex::scoped_lock lock(threadMutex);
-				ss->sendCommand(commandsToArd[0],cmdIndex);
-				delayCount = 0 ;
+				int writeOut(ss->sendCommand(commandsToArd[0],cmdIndex));
+				printf("Sent %d bytes", writeOut);
 				delay = commandsToArd[0].delayTime*1000000;
 				commandsToArd.erase(commandsToArd.begin());
 				
@@ -75,8 +71,7 @@ void SerialThreadObject::serialLoop()
 				cmdIndex++;
 			}
 		}
-		boost::this_thread::sleep(boost::posix_time::microseconds(1))
-			; //  milliseconds(PAUSE_INC_MS));
+		boost::this_thread::sleep(boost::posix_time::microseconds(1));
 	}
 }
 
@@ -135,9 +130,10 @@ void SerialThreadObject::serialCommand(const ThreadCmd& incomingCommand)
 					else
 					{
 					// have user select the correct port
-					for (int i = 0; i < ports.size(); i++) {
-						wxMessageBox(wxString::Format("Found Serial Port: %s (%d/%d)", wxString(ports[i]), i + 1, ports.size()));
-					}
+						for (int i = 0; i < ports.size(); i++)
+						{
+							wxMessageBox(wxString::Format("Found Serial Port: %s (%d/%d)", wxString(ports[i]), i + 1, ports.size()));
+						}
 						int which_port(wxGetNumberFromUser(wxEmptyString, wxT("Select Serial Port Number"), wxEmptyString, 0, 1, ports.size()) - 1);
 						wxMessageBox(wxString::Format("Selected Serial Port: %s", wxString(ports[which_port])));
 						ss->setPort(ports[which_port]);
@@ -146,8 +142,10 @@ void SerialThreadObject::serialCommand(const ThreadCmd& incomingCommand)
 							textStatusData->appendText(std::string("Connecting to Port: ")+ports[which_port]);
 						}
 					}
+
+
 					connected = ss->start();
-					if(textStatusData != NULL)
+					if(textStatusData != NULL && connected)
 					{
 						textStatusData->appendText(std::string("Connected!!"));
 					}

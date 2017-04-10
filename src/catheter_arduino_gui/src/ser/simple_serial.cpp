@@ -19,14 +19,15 @@
 SerialPort::SerialPort(void)
 {
 }
- 
-SerialPort::~SerialPort(void) {
-	
-	//delete the smart pointer nicely.
-	std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service_));
-	work.reset();
-	t.join();
-	return;
+
+SerialPort::~SerialPort(void)
+{
+  // delete the smart pointer nicely.
+  std::auto_ptr< boost::asio::io_service::work >
+    work(new boost::asio::io_service::work(io_service_));
+  work.reset();
+  t.join();
+  return;
 }
  
  
