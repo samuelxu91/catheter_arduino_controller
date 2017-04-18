@@ -1,86 +1,152 @@
-#include <SPI.h>
+/**************************************************************************
+   Copyright {2016} {Dr. Russell C Jackson}
 
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+#include <SPI.h>
 #include "ard_due_defs.h"
 #include "pin_defs.h"
 #include "spi_com.h"
 #include "serial_com_ard.h"
+#include "cmd_support.h"
+#include "cmd_parse.h"
 
 /* structs to represent channel status, channel commands, and serial packets */
 
-/* book-keeping for each channel */
-struct channelStatus {
-	int enable;
-	int dir;
-	uint16_t DAC_val;
-	uint16_t ADC_val;
+/**
+ * @brief Channel status is the status of the individual catheter coil.
+ *
+ * The status includes the following:
+ * - enable Whether or not the channel is active.
+ * - dir The current direction of the channel.
+ * - DAC_val The set current (12 bits).
+ * - ADC_val The sensed current (12 bits).
+ */
+struct channelStatus
+{
+  int enable;
+  int dir;
+  uint16_t DAC_val;
+  uint16_t ADC_val;
 };
 
-bool updatePending;
-
-/* **************** */
-/* global variables */
-/* **************** */
-
-/* tracks status of channels */
+/**
+ * @brief Individual channel statuses.
+ */
 channelStatus channelList[NCHANNELS];
-uint8_t packetStatus; // {X,X,X,X,PCK_CHK_ERR, POST_ERR, CMD_CHK_ERR, PRE_ERR} 
 
+/**
+ * @brief Bytes read in by the Arduino serial bus.
+ */
 uint8_t inputBytes[512];
+
+/**
+ * @brief Bytes returned from the Arduino serial bus.
+ */
 uint8_t outputBytes[512];
 
+/**
+ * @brief Used for writing data to the camera GPIO.
+ *
+ * Indexed from 0 to 3. The GPIO bus width is 2 bits.
+ */
 unsigned int camera_counter;
 
-/* ******************* */
-/* new camera function */
-/* ******************* */
+/**
+ * @brief The previous MRI imaging status.
+ *
+ * The MRI indicates imaging by setting an input pin.
+ */
+bool mriStatOld;
 
+/**
+ * @brief The Arduino time at which the MRI begins scanning.
+ */
+unsigned long tof = 0;
+
+/**
+ * @brief Write the camera_counter to the camera GPIO.
+ *
+ * This function uses the Arduino digital write.
+ *
+ * @param counter Counter passed in from the main function.
+ */
 int camera_write(int counter)
 {
-    static unsigned long mriStartTime(0);
+  static unsigned long mriStartTime(0);
     
-    // make sure counter is integer 0 - 7
-    counter = counter % 4;
-    if (counter % 2 == 1) digitalWrite(CAMERA_PINS[0], HIGH);
-    else digitalWrite(CAMERA_PINS[0], LOW);
-    if ((counter >> 1) % 2 == 1) digitalWrite(CAMERA_PINS[1], HIGH);
-    else digitalWrite(CAMERA_PINS[1], LOW);
+  // make sure counter is integer 0 - 3 
+  // The integer is written to a 2 bit wide bus using MSB.
+  counter = counter % 4;
+  if (counter % 2 == 1)
+  {
+    digitalWrite(CAMERA_PINS[0], HIGH);
+  }
+  else
+  {
+    digitalWrite(CAMERA_PINS[0], LOW);
+  }
+  if ((counter >> 1) % 2 == 1)
+  {
+    digitalWrite(CAMERA_PINS[1], HIGH);
+  }
+  else
+  {
+    digitalWrite(CAMERA_PINS[1], LOW);
+  }
     
-    int mriStatus = digitalRead(mriPin);
-    if(mriStatus)
+  // This checks the MRI imaging status pin and writes that pin to 
+  // the 3rd of the camera bus.
+  // This pin is guaranteed to be on for at least 20 ms.
+  int mriStatus = digitalRead(mriPin);
+  if (mriStatus)
+  {
+    mriStartTime = millis();
+    digitalWrite(CAMERA_PINS[2],HIGH);
+  }
+  else
+  {
+    if (mriStartTime != 0)
     {
-
-        mriStartTime = millis();
-
-        digitalWrite(CAMERA_PINS[2],HIGH);
-    }
-    else if(mriStartTime != 0)
-    {
-        unsigned long currentTime(millis());
-
-        unsigned long minOn(20); //minimum on time for the MRI pin
-        if((mriStartTime + minOn) < currentTime)
-        {
-        	digitalWrite(CAMERA_PINS[2],LOW);
-        	mriStartTime = 0;
-        }
-        else if(mriStartTime > currentTime && currentTime > minOn )
-        {
-        	digitalWrite(CAMERA_PINS[2],LOW);
-        	mriStartTime = 0;
-        }
+      unsigned long currentTime(millis());
+      // minimum on time for the MRI pin (20 ms).
+      unsigned long minOn(20);
+      
+      // turn off the pin after the on time has passed.
+      if ((mriStartTime + minOn) < currentTime)
+      {
+    	digitalWrite(CAMERA_PINS[2],LOW);
+    	mriStartTime = 0;
+      }
+      
+      // turn off the mri pin after the on time has passed in case there was
+      // a zero wrapparound. (This happens every ~52 days)
+      if (mriStartTime > currentTime && currentTime > minOn )
+      {
+        digitalWrite(CAMERA_PINS[2],LOW);
+    	mriStartTime = 0;
+       }
     }
     else
     {
-    	digitalWrite(CAMERA_PINS[2],LOW);
-    	mriStartTime = 0;
+      digitalWrite(CAMERA_PINS[2],LOW);
+      mriStartTime = 0;
     }
-    // if (counter >= 4) digitalWrite(CAMERA_PINS[2], HIGH);
-    // else digitalWrite(CAMERA_PINS[2], LOW);
-    return mriStatus;
+  }
+  return mriStatus;
 }
 
-#include "cmd_support.h"
-#include "cmd_parse.h"
 
 /* set pins to output mode and put them in defined state */
 void pin_init() {
@@ -129,13 +195,6 @@ void set_direction(int channel, int direction) {
 	}
 }
 
-bool addr_is_global(uint8_t addr) {
-   return addr==0;
-}
-
-bool mriStatOld;
-
-unsigned long tof = 0;
 /* ************ */
 /* main program */
 /* ************ */
@@ -146,7 +205,6 @@ void setup() {
 
 	serial_init();
 
-	packetStatus = 0; // {X,X,X,X,PCK_CHK_ERR, POST_ERR, CMD_CHK_ERR, PRE_ERR} 
   
   for ( int i = 0; i < 512; i++)
   {
@@ -156,7 +214,6 @@ void setup() {
 	camera_counter = 0;
 	delay(START_DELAY);
   mriStatOld = false;
-  updatePending = false;
 }
 
 void loop() {
