@@ -17,12 +17,17 @@
 #include <SPI.h>
 #include "ard_due_defs.h"
 #include "pin_defs.h"
+#include "arduino_hardware.h"
 #include "spi_com.h"
 #include "serial_com_ard.h"
 #include "cmd_support.h"
 #include "cmd_parse.h"
 
-/* structs to represent channel status, channel commands, and serial packets */
+
+/**
+ * @brief Individual channel statuses.
+ */
+channelStatus channelList[NCHANNELS];
 
 
 /**
@@ -57,7 +62,8 @@ unsigned long scanStartTime = 0;
 /**
  * @brief The MR scanning duration in ms in which the currents are turned off.
  */
- unsigned long scanDuration = 40;
+unsigned long scanDuration = 40;
+
 
 
 /**
@@ -98,9 +104,10 @@ void loop()
     {
       camera_counter = camera_counter + 1;
 
+
       uint8_t outputLength(0);
       // This function no longer actually changes
-      outputLength = cmd_parse(inputBytes, packetSize, cmdCount, outputBytes, packetIndex);
+      outputLength = cmd_parse(inputBytes, packetSize, cmdCount, channelList,outputBytes, packetIndex);
       write_bytes(outputBytes, outputLength);
     }
     else

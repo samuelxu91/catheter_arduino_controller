@@ -40,3 +40,6 @@
 #define INPUT_BUF   0b00000000    /* Vref input not buffered; bit 14 */
 #define GAIN_SELECT 0b00100000    /* output gain = 1;         bit 13 */
 #define PWR_DOWN    0b00010000    /* output power-down ctrl;  bit 12 */
+
+
+

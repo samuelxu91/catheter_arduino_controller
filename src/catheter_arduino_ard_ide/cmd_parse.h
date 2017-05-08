@@ -14,6 +14,7 @@
  */
 
 
+
 // @TODO(RCJ) If this header file is ever used outside of the arduino IDE,
 // then add header guards
 
@@ -22,6 +23,12 @@
 /* **************** */
 /* command parsing functions */
 /* **************** */
+
+
+/* structs to represent channel status, channel commands, and serial packets */
+
+
+
 
 bool cmd_check(const uint8_t *charBuffer, uint8_t bufferLength, uint8_t* packetIndex, uint8_t* cmdCount)
 {
@@ -45,7 +52,7 @@ bool cmd_check(const uint8_t *charBuffer, uint8_t bufferLength, uint8_t* packetI
 // *reply: the byte array to write reply bytes into
 // reply_index: where in the reply array to start writing reply bytes
 // *nbytes: return the number of reply bytes appended to the array
-int executeSingleCmd(const uint8_t* cmdBytes, uint8_t *responseBytes, uint8_t *responseIndex, uint8_t  *pollCount)
+int executeSingleCmd(const uint8_t* cmdBytes, channelStatus * chanPtr, uint8_t *responseBytes, uint8_t *responseIndex, uint8_t  *pollCount)
 {
   uint8_t addr = cmdBytes[0] >> 4;
   uint8_t cmdVal = cmdBytes[0] & 15;
@@ -56,37 +63,40 @@ int executeSingleCmd(const uint8_t* cmdBytes, uint8_t *responseBytes, uint8_t *r
     // note that i is index from 1 - NCHANNELS (offset by 1)...
     for (uint8_t i(0); i < (NCHANNELS); i++)
     {
-      *pollCount += processSingleChannel(i, cmdVal, cmdData, responseBytes, responseIndex);
+      *pollCount += processSingleChannel(i, chanPtr[i], cmdVal, cmdData, responseBytes, responseIndex);
     }
     return NCHANNELS;
   }  // if (addr == 0)
   else
   {
     int i(addr-1);
-    *pollCount += processSingleChannel(i, cmdVal, cmdData, responseBytes, responseIndex);
+    *pollCount += processSingleChannel(i, chanPtr[i], cmdVal, cmdData, responseBytes, responseIndex);
     return 1;
   }  // if (addr == 0) else
   return 0;  // error...
 }
 
 // This function parses the command
-int cmd_parse(const uint8_t* charBuffer, uint8_t bufferLength, uint8_t cmdCount,
+int cmd_parse(const uint8_t* charBuffer, uint8_t bufferLength, uint8_t cmdCount, channelStatus * chanPtr,
   uint8_t* outputBytes, uint8_t packetIndex)
 {
   // The first 2 bytes are reserved.
-  uint8_t outputIndex(2);
+  uint8_t outputIndex(3);
   uint8_t pollCount(0);
   uint8_t responses(0);
   for (int i = 0; i < cmdCount; i++)
   {
     const uint8_t* localAddress = charBuffer+PRE_LEN+i*CMD_LEN;
     // execute the channel command
-    responses += executeSingleCmd(localAddress, outputBytes, &outputIndex, &pollCount);
+    responses += executeSingleCmd(localAddress, chanPtr, outputBytes, &outputIndex, &pollCount);
   }
   // finish encoding the response...
-  outputBytes[0] = 128 + 64 + (packetIndex & 15);  // 1st preamble (ok and packet index)
-  outputBytes[1] = (responses << 4) + (pollCount & 15);  // 2nd preamble (There could be some overflow here).
+  outputBytes[0] = 128 + 64 + (packetIndex & 7);  // 1st preamble bit (ok and packet index)
+  outputBytes[1] = 128 + 64 + (packetIndex & 7);  // 2st preamble bit (ok and packet index)
+  outputBytes[2] = (responses << 4) + (pollCount & 15);  // 3rd preamble bit (There could be some overflow here).
   outputBytes[outputIndex] = fletcher8(outputIndex, outputBytes);
+  outputIndex++;
+  outputBytes[outputIndex] = 0;
   outputIndex++;
   return outputIndex;
 }
