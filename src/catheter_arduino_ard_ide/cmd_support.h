@@ -17,6 +17,172 @@
 // @TODO(RCJ) If this header file is ever used outside of the arduino IDE,
 // then add header guards
 
+/**
+ * @brief Channel status is the status of the individual catheter coil.
+ *
+ * The status includes the following:
+ * - enable Whether or not the channel is active.
+ * - dir The current direction of the channel.
+ * - DAC_val The set current (12 bits).
+ * - ADC_val The sensed current (12 bits).
+ */
+struct channelStatus
+{
+  int enable;
+  int dir;
+  uint16_t DAC_val;
+  uint16_t ADC_val;
+};
+
+/**
+ * @brief Individual channel statuses.
+ */
+channelStatus channelList[NCHANNELS];
+
+/**
+ * @brief Enable or disable an H-bridge channel.
+ *
+ * @param channel The H-bridge channel to be enable/disable.
+ * @param en This is set to 1 if the H-bridge is to be enable, set to 0 otherwise.
+ */
+void toggle_enable(int channel, int en)
+{
+ if (en == 0)
+  {
+    digitalWrite(H_Enable_pins[channel], !H_EN);
+  }
+  else
+  {
+    digitalWrite(H_Enable_pins[channel], H_EN);
+  }
+}
+/**
+ * @brief Write the camera_counter to the camera GPIO.
+ *
+ * This function uses the Arduino digital write.
+ *
+ * @param counter Counter passed in from the main function.
+ */
+int camera_write(int counter)
+{
+  static unsigned long mriStartTime(0);
+
+  // We use two bits of the camera's GPIO for the counter.
+  counter = counter % 4;
+
+  // Set CAMERA_PINS according to the counter.
+  if (counter % 2 == 1)
+  {
+    digitalWrite(CAMERA_PINS[0], HIGH);
+  }
+  else
+  {
+    digitalWrite(CAMERA_PINS[0], LOW);
+  }
+
+  if ((counter >> 1) % 2 == 1)
+  {
+    digitalWrite(CAMERA_PINS[1], HIGH);
+  }
+  else
+  {
+    digitalWrite(CAMERA_PINS[1], LOW);
+  }
+
+  // This checks the MRI imaging status pin.
+  // This pin is guaranteed to be on for at least 20 ms.
+  int mriStatus = digitalRead(mriPin);
+
+  // Set CAMERA_PINS[2] according to the MRI status.
+  if (mriStatus)
+  {
+    mriStartTime = millis();
+    digitalWrite(CAMERA_PINS[2], HIGH);
+  }
+  else
+  {
+    if (mriStartTime != 0)
+    {
+      unsigned long currentTime(millis());
+      // minimum on time for the MRI pin (20 ms).
+      unsigned long minOn(20);
+
+      // turn off the pin after the on time has passed.
+      if ((mriStartTime + minOn) < currentTime)
+      {
+     digitalWrite(CAMERA_PINS[2],LOW);
+      mriStartTime = 0;
+      }
+
+      // turn off the mri pin after the on time has passed in case there was
+      // a zero wrapparound. (This happens every ~52 days)
+      if (mriStartTime > currentTime && currentTime > minOn )
+      {
+        digitalWrite(CAMERA_PINS[2],LOW);
+      mriStartTime = 0;
+       }
+    }
+    else
+    {
+      digitalWrite(CAMERA_PINS[2],LOW);
+      mriStartTime = 0;
+    }
+  }
+  return mriStatus;
+}
+
+
+/**
+ * @brief Initialize pin modes and states.
+ */
+void pin_init()
+{
+  pinMode(mriPin, INPUT);
+
+  for (int i = 0; i < NCHANNELS; i++)
+  {
+    pinMode(ADC_CS_pins[i], OUTPUT);
+    pinMode(DAC_CS_pins[i], OUTPUT);
+    pinMode(H_Enable_pins[i], OUTPUT);
+    pinMode(H_Neg_pins[i], OUTPUT);
+    pinMode(H_Pos_pins[i], OUTPUT);
+    pinMode(DAC_LDAC_pins[i], OUTPUT);
+    digitalWrite(ADC_CS_pins[i], !CS_EN);
+    digitalWrite(DAC_CS_pins[i], !CS_EN);
+    digitalWrite(DAC_LDAC_pins[i], LOW);
+    digitalWrite(H_Enable_pins[i], !H_EN);
+    digitalWrite(H_Neg_pins[i], !DIR_ON);
+    digitalWrite(H_Pos_pins[i], DIR_ON);
+  }
+
+  for (int i = 0; i < 3; i++)
+  {
+    pinMode(CAMERA_PINS[i], OUTPUT);
+    digitalWrite(CAMERA_PINS[i], LOW);
+  }
+
+}
+
+/**
+ * @brief Set the direction of an H-bridge channel.
+
+ * @param channel The H-bridge channel whose direction is to be set.
+ * @param direction The direction of the H-bridge channel.
+ */
+void set_direction(int channel, int direction)
+{
+  if (direction == 0)
+  {
+    digitalWrite(H_Neg_pins[channel], DIR_ON);
+    digitalWrite(H_Pos_pins[channel], !DIR_ON);
+  }
+  else
+  {
+    digitalWrite(H_Pos_pins[channel], DIR_ON);
+    digitalWrite(H_Neg_pins[channel], !DIR_ON);
+  }
+}
+
 
 /* calculate 8-bit fletcher checksum using blocksize=4 */
 uint8_t fletcher8(uint8_t len, const uint8_t* data)
