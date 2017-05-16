@@ -45,16 +45,16 @@
 
 
   <build_depend>roscpp</build_depend>
-  <!-- <build_depend>Boost</build_depend> -->
-  
-  <!-- <build_depend>wxWidgets</build_depend> -->
+  <build_depend>roslint</build_depend>
+  <build_depend>boost</build_depend>
+  <build_depend>wxwidgets</build_depend>
   <!--<build_depend>GTest</build_depend> -->
   
 
 
   <run_depend>roscpp</run_depend>
-  <!--<run_depend>Boost</run_depend> -->
-  <!--<run_depend>wxWidgets</run_depend> -->
+  <run_depend>boost</run_depend>
+  <run_depend>wxwidgets</run_depend>
 
   <!-- <run_depend>GTest</run_depend> -->
 

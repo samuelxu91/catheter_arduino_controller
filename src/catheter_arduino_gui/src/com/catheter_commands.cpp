@@ -1,4 +1,18 @@
+/*
+  Copyright 2017 Russell Jackson
 
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
 #include "com/catheter_commands.h"
 #include "hardware/digital_analog_conversions.h"
 
@@ -17,20 +31,31 @@
 
 /* calculate 8-bit fletcher checksum using blocksize=4 */
 // This is for error correction.
-uint8_t fletcher8(int len, uint8_t data[]) {
-  uint8_t sum1 = 0, sum2 = 0;
-  int i;
-  for (i = 0; i<len; i++) {
-    sum1 += (data[i] >> 4);   //first 4 bits
-    sum2 += sum1;
+uint8_t fletcher8(int len, const std::vector<uint8_t> &data)
+{
+  
+  if (len <= data.size())
+  {
+    // The 8-bit fletcher checksum is using blocksize of 4.
+    // 
+    uint8_t sum1(0), sum2(0);
+    for (int i(0); i<len; i++)
+    {
+      // first 4 bits
+      sum1 += (data[i] >> 4);
+      sum2 += sum1;
 
-    sum1 += (data[i] & 15);   //last 4 bits
-    sum2 += sum1;
+      // last 4 bits
+      sum1 += (data[i] & 15);
+      sum2 += sum1;
 
-    sum1 %= 16;   //modulo 15
-    sum2 %= 16;
+      //modulo 15
+      sum1 %= 16;   
+      sum2 %= 16;
+    }
+    return ((sum2) << 4) + (sum1);
   }
-  return ((sum2) << 4) + (sum1);
+  return 0;
 }
 
 
@@ -79,7 +104,7 @@ std::vector<uint8_t> encodeCommandSet(const CatheterChannelCmdSet& cmds, int pse
   
   tempEncoding = encodePostamble(pseqnum);
   encodedSet.insert(encodedSet.end(), tempEncoding.begin(), tempEncoding.end());
-  uint8_t chksum = fletcher8(encodedSet.size(), encodedSet.data());
+  uint8_t chksum = fletcher8(encodedSet.size(), encodedSet);
   encodedSet.insert(encodedSet.end(), 1, chksum);
   // encode the preamble.
   return encodedSet;
@@ -89,8 +114,10 @@ std::vector<uint8_t> encodePreamble(int pseqnum, int ncmds)
 {
   std::vector<uint8_t> bytes;
   int i;
-  for (i = 0; i<PRE_LEN; i++) {
-    if (i == 0) {
+  for (i = 0; i < PRE_LEN; i++)
+  {
+    if (i == 0)
+    {
       bytes.push_back(PCK_OK << 7);          /* ok1 */
       bytes[i] |= (pseqnum & 7) << 4;    /* index3 */
       bytes[i] |= (ncmds & 15);           /* cmdCnt4 */
@@ -117,7 +144,8 @@ std::vector<uint8_t> encodeSingleCommand(const CatheterChannelCmd& cmd)
 
   uint16_t dacSetting(milliAmp2Dac(cmd.currentMilliAmp));
 
-  for (int i(0); i < CMD_LEN; i++) {
+  for (int i(0); i < CMD_LEN; i++)
+  {
     if (i == 0)
     {
       bytes.push_back(firstByte);          // bits 1-4
@@ -136,11 +164,14 @@ std::vector<uint8_t> encodeSingleCommand(const CatheterChannelCmd& cmd)
   return bytes;
 }
 
-std::vector<uint8_t> encodePostamble(int pseqnum) {
+std::vector<uint8_t> encodePostamble(int pseqnum)
+{
   std::vector<uint8_t> bytes;
   int i;
-  for (i = 0; i < POST_LEN; i++) {
-    if (i == 0) {
+  for (i = 0; i < POST_LEN; i++)
+  {
+    if (i == 0)
+    {
       bytes.push_back(pseqnum << 5);  // index3
       bytes[i] |= PCK_OK & 1;     // packet OK bit appended to beginning and end of packet
     }
@@ -204,54 +235,6 @@ CatheterChannelCmdSet resetCommand()
 }
 
 
-bool parseBytes2Cmds(const std::vector<unsigned char>& reply, std::vector<CatheterChannelCmd>& cmds) {
-
-  cmds.clear();
-
-  if (!reply.size()) return false;
-
-  unsigned char nextByte;
-  int pseqnum = -1;
-  int data = 0;
-  bool packet_ok = false;
-  unsigned int byte_count = 0;
-
-  for (int b = 0; b < reply.size(); b++) {
-    nextByte = reply[b];
-    if ((nextByte == '\r' || nextByte == '\n') && (reply.size() - b) <= 2)
-    {
-      break;
-    }
-    if (nextByte >= 128 || !(byte_count % RESPONSE_LEN(1, false, 0)))
-    {
-      pseqnum = nextByte & 15;
-      packet_ok = (nextByte >= 192);
-      byte_count = 1;
-      data = 0;
-    }
-    else 
-    {
-      switch (byte_count % RESPONSE_LEN(1, false, 0))
-      {
-      case 1:
-        data += ((nextByte & 63) << 6);
-        break;
-      case 2:
-        if (packet_ok)
-        {
-          data += (nextByte & 63);
-          CatheterChannelCmd c = emptyCommand();
-          c.currentMilliAmp = data; // this is dac resolution! convert this in the calling method!
-          cmds.push_back(c);
-        }
-        break;
-      }
-      byte_count++;
-    }
-  }
-  return packet_ok;
-}
-
 void printData(const std::vector< uint8_t >& bytesRead)
 {
   printf("Input bytes:\n");
@@ -262,88 +245,76 @@ void printData(const std::vector< uint8_t >& bytesRead)
   printf("\n");
 }
 
-comStatus parseBytes2Cmds(std::vector< uint8_t >& bytesRead, std::vector<CatheterChannelCmd>& cmds)
+int parseBytes2Cmds(int byteCount, std::vector<uint8_t>& bytesRead, std::vector<CatheterChannelCmd>& cmds)
 {
-  // reset the cmd...
-  // cmd.reset();
-  // print the serial data:
-  cmds.clear();
-
-  // populate the top level command information
-  // if the bytes read produces an invalid response, then do something about it.
-  // also, add an expected command index.
-  int startIndex(0);
-  int sizeEst(-1);
-
-  while (sizeEst < 0)
-  {
-    // iterate through this loop until there is a valid start
-    sizeEst = parsePreamble(bytesRead);
-    if (sizeEst < 0)
-    {
-      // delete the first element
-      bytesRead.erase(bytesRead.begin());
-    }
-  }
-
-  // calculate the size of the return
-  if (sizeEst > bytesRead.size())
-  {
-    printf("The byte width is too short\n");
-    printf("Expected %d\n", sizeEst);
-    printf("Got %d\n", static_cast<int>(bytesRead.size()));
-    printData(bytesRead);
-    // bytesRead.clear();
-    return invalid;
-  }
-
-  // validate the bytes and fletcher code.
-  uint8_t chksum(fletcher8(sizeEst - 1, bytesRead.data()));
-  if (chksum != bytesRead[sizeEst - 1])
-  {
-    // clear
-    printf("The checksum fails\n");
-    printData(bytesRead);
-    bytesRead.clear();
-    return invalid;
-  }
-
-  // intrepret each byte
-  int byteIndex(2);
-
-  while (byteIndex + 3 < sizeEst)
+  int byteIndex(3);
+  while (byteIndex + 1 < byteCount)
   {
     cmds.push_back(parseSingleCommand(bytesRead, byteIndex));
   }
+  bytesRead.erase(bytesRead.begin(), bytesRead.begin() + byteCount);
+  return 1;
+}
 
-  bytesRead.erase(bytesRead.begin(), bytesRead.begin() + sizeEst);
-  return valid;
+int estResponseSize(const CatheterChannelCmdSet &commands)
+{
+  int respSize(4);
+  for (int i(0); i < commands.commandList.size(); i++)
+  {
+    int chanCount(1);
+    if (commands.commandList[i].channel == 0)
+      chanCount = 6;
+
+    if (commands.commandList[i].poll)  chanCount *= 5;
+    else  chanCount *= 3;
+
+    respSize += chanCount;
+  }
+  return respSize;
 }
 
 
-
-int parsePreamble(const std::vector < uint8_t > &inputBytes)
+int parseFirstSecondByte(const std::vector < uint8_t > &inputBytes)
 {
-  // byte 1
-  uint8_t ok((inputBytes[0] >> 6) % 2);
-
-
-  // cmdCount
-  uint8_t cmdCount(inputBytes[1] >> 4);
-  uint8_t pollCount(inputBytes[1] & 15);
-
-  int totalSize(0);
-  // if the byte is ok, the expected size is 3 * # cmd + 2 * # poll
-  if (ok > 0)
+  // verify that the first two bytes are equal:
+  if (inputBytes[0] != inputBytes[1])
   {
-    totalSize = static_cast<int> (cmdCount)*3 + static_cast<int> (pollCount)*2 + 3;
+    return -1;
   }
+
+  uint8_t ok_1((inputBytes[0] >> 7) % 2);
+  uint8_t ok_2((inputBytes[0] >> 6) % 2);
+
+  bool ok(ok_1 & ok_2);
+
+  if (ok)
+  {
+    int index_((inputBytes[0]) % 8);
+    return index_;
+  }
+  else return -1;
+}
+
+int parseThirdByte(const std::vector < uint8_t > &inputBytes)
+{
+  uint8_t cmdCount(inputBytes[2] >> 4);
+  uint8_t pollCount(inputBytes[2] & 15);
+
+  int totalSize = static_cast<int> (cmdCount)*3 + static_cast<int> (pollCount)*2 + 4;
+  return totalSize;
+}
+
+
+bool checkFletcher(int length, const std::vector<uint8_t> &bytePacket)
+{
+  uint8_t checksum(fletcher8(length-1, bytePacket));
+
+  if (bytePacket[length-1] == checksum) return true;
   else
   {
-    // verify the size of a bad packet.
-    totalSize = -1;
+    printf("%d, %d\n", checksum, bytePacket[length-1]);
+    return false;
   }
-  return totalSize;
 }
 
 

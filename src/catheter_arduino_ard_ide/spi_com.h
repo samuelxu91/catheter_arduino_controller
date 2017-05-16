@@ -33,6 +33,7 @@
 #define GAIN_SELECT 0b00100000    /* output gain = 1;         bit 13 */
 #define PWR_DOWN    0b00010000    /* output power-down ctrl;  bit 12 */
 
+#define CS_EN LOW
 
 /** 
  * @brief  read a 12-bit value from the MCP3201 ADC on a specified channel 

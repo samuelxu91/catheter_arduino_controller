@@ -15,18 +15,20 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -O0" )
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 
-IF( catkin_FOUND)
+IF(catkin_FOUND)
 
 MESSAGE(Found Catkin:)
+
+#find_package(catkin REQUIRED COMPONENTS roslint roscpp)
 
 catkin_package(
       INCLUDE_DIRS inc
       LIBRARIES pc_utils_lib
-      CATKIN_DEPENDS
-              roscpp
-      DEPENDS
-              GTest
-      EXPORTED_TARGETS
+      DEPENDS 
+        GTest 
+        Boost COMPONENTS system thread
+        wxWidgets COMPONENTS core base adv propgrid
+      CATKIN_DEPENDS roscpp
 )
 
 ENDIF()
@@ -43,7 +45,6 @@ inc
 include( "${wxWidgets_USE_FILE}" )
 
 # common folder libs
-
 
 add_library(catheter_commands_lib src/com/catheter_commands.cpp)
 
@@ -157,6 +158,13 @@ ${wxWidgets_ADVANCED_LIBRARIES}
 ${wxWidgets_LIBRARIES}
 )
 
+if(roslint_FOUND)
+
+roslint_cpp()
+
+#roslint_add_test()
+
+endif()
 
 if(catkin_FOUND)
 
@@ -174,5 +182,7 @@ install(DIRECTORY test/
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/test
 )
 
-
 endif()
+
+
+

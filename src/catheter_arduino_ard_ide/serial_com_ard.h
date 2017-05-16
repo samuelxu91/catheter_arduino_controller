@@ -21,6 +21,27 @@
 /* Serial functions */
 /* **************** */
 
+/* calculate 8-bit fletcher checksum using blocksize=4 */
+uint8_t fletcher8(uint8_t len, const uint8_t* data)
+{
+  uint8_t sum1 = 0, sum2 = 0;
+  int i;
+  for (i = 0; i < len; i++)
+  {
+    // first 4 bits
+    sum1 += (data[i] >> 4);
+    sum2 += sum1;
+
+    // last 4 bits
+    sum1 += (data[i] & 15);
+    sum2 += sum1;
+
+    // modulo 15
+    sum1 %= 16;
+    sum2 %= 16;
+  }
+  return ((sum2) << 4) + (sum1);
+}
 
 // initialize the arduino serial bus.
 void serial_init()
@@ -118,11 +139,17 @@ uint8_t read_bytes(uint8_t charBuffer[], int count)
 // write a bad response to the serial bus
 void writeError(uint8_t packetIndex = 0)
 {
-  write_byte((8 << 4) + (packetIndex & 15));
+  uint8_t badResp[5];
+  badResp[0] = (8 << 4) + (packetIndex & 7);
+  badResp[1] = badResp[0];
+  badResp[2] = 0;
+  badResp[3] = fletcher8(3, badResp);
+  badResp[4] = 0;
+  write_bytes(badResp, 5);
 }
 
 // Write a good response to the serial bus.
-void writeGood(uint8_t packetIndex)
+/*void writeGood(uint8_t packetIndex)
 {
   write_byte((12 << 4) + (packetIndex & 15));
-}
+}*/
