@@ -19,21 +19,23 @@
 #include <boost/thread.hpp>
 #include <wx/wx.h>
 #include <wx/numdlg.h>
-// Here is the serial thread.
+#include <string>
+#include <vector>
 
 #ifdef _MSC_VER
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
 #ifdef _DEBUG
-   #ifndef DBG_NEW
-      #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
-      #define new DBG_NEW
-   #endif
+  #ifndef DBG_NEW
+    #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
+    #define new DBG_NEW
+  #endif
 #endif  // _DEBUG
 #endif  // __MSC_VER
 
-#define PAUSE_INC_MS 1 //ms to wait between consecutive probes
+// ms to wait between consecutive probes
+#define PAUSE_INC_MS 1
 
 
 SerialThreadObject::SerialThreadObject():
@@ -43,13 +45,13 @@ SerialThreadObject::SerialThreadObject():
   textStatusData_(NULL),
   statusGridData_(NULL)
 {
-  //retain a handle to the thread (This way a graceful exit is possible).
+  // retain a handle to the thread (This way a graceful exit is possible).
   thread_loop_handle_ = boost::thread(boost::bind(&SerialThreadObject::serialLoop, this));
 }
 
+
 void SerialThreadObject::serialLoop()
 {
-
   boost::posix_time::ptime t1(boost::posix_time::second_clock::local_time());
   int64_t delay(0);
   int cmdIndex(0);
@@ -63,15 +65,15 @@ void SerialThreadObject::serialLoop()
         comStatus newCom(ss_->probePacket());
 
         printComStat(newCom);
-        
+
         CatheterChannelCmd incomingData;
         boost::recursive_mutex::scoped_lock lock(threadMutex_);
         // printf("recieved command: ");
-        //printComStat(newCom);
-        if(newCom == valid)
+        // printComStat(newCom);
+        if (newCom == valid)
         {
           ss_->processData(commandFromArd.commandList);
-          if(statusGridData_ != NULL)
+          if (statusGridData_ != NULL)
           {
             statusGridData_->updateCmdList(commandFromArd.commandList);
           }
@@ -119,88 +121,88 @@ void SerialThreadObject::setStatusGrid(statusData* newPtr)
 void SerialThreadObject::serialCommand(const ThreadCmd& incomingCommand)
 {
   // check for avaiable data:
-    
-    if(incomingCommand != noCmd)
+  if (incomingCommand != noCmd)
+  {
+    boost::recursive_mutex::scoped_lock looplock(threadMutex_);
+    switch (incomingCommand)
     {
-      boost::recursive_mutex::scoped_lock looplock(threadMutex_);
-      switch (incomingCommand)
+    case resetArduino:
+    {
+      queueCommand(resetCmd(), true);
+    }
+    break;
+    case resetSerial:
+    {
+      if (ss_->connected())
       {
-      case resetArduino:
-      {
-        queueCommand(resetCmd(), true);
+        ss_->stop();
       }
-      break;
-      case resetSerial:
+      if (textStatusData_ != NULL)
       {
-        if(ss_->connected())
+        textStatusData_->appendText(std::string("Attempting to reset Arduino Serial Connection"));
+      }
+      // reset the serial bus.
+      std::vector<std::string> ports;
+      ss_->getAvailablePorts(ports);
+      if (!ports.size())
+      {
+        if (textStatusData_ != NULL)
         {
-          ss_->stop();
+          textStatusData_->appendText(std::string("No Serial Ports found."));
         }
-        if(textStatusData_ != NULL)
+      }
+      else
+      {
+        if (ports.size() == 1)
         {
-          textStatusData_->appendText(std::string("Attempting to reset Arduino Serial Connection"));
-        }
-        //reset the serial bus.
-        std::vector<std::string> ports;
-        ss_->getAvailablePorts(ports);
-        if (!ports.size())
-        {
-          if(textStatusData_ != NULL)
+          ss_->setPort(ports[0]);
+          if (textStatusData_ != NULL)
           {
-            textStatusData_->appendText(std::string("No Serial Ports found."));
+            textStatusData_->appendText(std::string("Connecting to Port: ")+ports[0]);
           }
-        } 
+        }
         else
         {
-          if (ports.size() == 1)
+          // have user select the correct port
+          for (int i = 0; i < ports.size(); i++)
           {
-            ss_->setPort(ports[0]);
-            if(textStatusData_ != NULL)
-            {
-              textStatusData_->appendText(std::string("Connecting to Port: ")+ports[0]);
-            }
+            wxMessageBox(wxString::Format("Found Serial Port: %s (%d/%d)", wxString(ports[i]), i + 1, ports.size()));
           }
-          else
+          int which_port(wxGetNumberFromUser(wxEmptyString,
+            wxT("Select Serial Port Number"), wxEmptyString, 0, 1, ports.size()) - 1);
+          wxMessageBox(wxString::Format("Selected Serial Port: %s", wxString(ports[which_port])));
+          ss_->setPort(ports[which_port]);
+          if (textStatusData_ != NULL)
           {
-            // have user select the correct port
-            for (int i = 0; i < ports.size(); i++)
-            {
-              wxMessageBox(wxString::Format("Found Serial Port: %s (%d/%d)", wxString(ports[i]), i + 1, ports.size()));
-            }
-            int which_port(wxGetNumberFromUser(wxEmptyString, wxT("Select Serial Port Number"), wxEmptyString, 0, 1, ports.size()) - 1);
-            wxMessageBox(wxString::Format("Selected Serial Port: %s", wxString(ports[which_port])));
-            ss_->setPort(ports[which_port]);
-            if(textStatusData_ != NULL)
-            {
-              textStatusData_ -> appendText(std::string("Connecting to Port: ")+ports[which_port]);
-            }
-          }
-
-          ss_->start();
-          if(textStatusData_ != NULL && ss_->connected())
-          {
-            textStatusData_->appendText(std::string("Successfully Connected!!"));
-            printf("successfully connected\n");
+            textStatusData_ -> appendText(std::string("Connecting to Port: ")+ports[which_port]);
           }
         }
-      } 
-      break;
-      case poll:
-        queueCommand(pollCmd(), true);
-      break;
-      case connect:
-        //connect to the arduino
-      case disconnect:
-        //disconnect from the arduino
-      default:
-        if(textStatusData_ != NULL)
+
+        ss_->start();
+        if (textStatusData_ != NULL && ss_->connected())
         {
-          textStatusData_->appendText(std::string("Command not recognized"));
+          textStatusData_->appendText(std::string("Successfully Connected!!"));
+          printf("successfully connected\n");
         }
       }
-      looplock.unlock();
     }
-    return;
+    break;
+    case poll:
+      queueCommand(pollCmd(), true);
+    break;
+    case connect:
+      // connect to the arduino
+    case disconnect:
+      // disconnect from the arduino
+    default:
+      if (textStatusData_ != NULL)
+      {
+        textStatusData_->appendText(std::string("Command not recognized"));
+      }
+    }
+    looplock.unlock();
+  }
+  return;
 }
 
 
@@ -244,7 +246,7 @@ void SerialThreadObject::queueCommand(const CatheterChannelCmdSet &command_to_ar
   // append the new command
   boost::recursive_mutex::scoped_lock
   lock(threadMutex_);
-  //append the new command.
+  // append the new command.
   if (flush)
   {
     flushCommandQueue();
@@ -260,7 +262,7 @@ void SerialThreadObject::queueCommands(const std::vector< CatheterChannelCmdSet 
   // append the new commands
   boost::recursive_mutex::scoped_lock
   lock(threadMutex_);
-  //append the new command.
+  // append the new command.
   if (flush)
   {
     flushCommandQueue();

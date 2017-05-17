@@ -52,3 +52,42 @@ void set_direction(int channel, int direction)
   }
 }
 
+
+/** 
+ * @brief translate the 16 bit SPI data received from the MCP3201 ADC to the 12 bits sent to the PC 
+ *
+ * The bits are split so that the 6 MSB are in the upper byte (Right justified) 
+ * While the 6 LSB are in the lower byte (also right justified)
+ * 
+ * @param The raw 2-bytes read by the arduino.
+ * 
+ * @return the 16 bit split value of the ADC.
+ * There should be 12 valid bits.
+ * This function returns 0x4000 when there is a problem.
+ */
+uint16_t processADC(uint16_t inputWord)
+{
+  // find the null bit:
+  uint16_t tempWord(inputWord);
+  int shiftInd = 0;
+  while (tempWord > 32768)
+  {
+    shiftInd++;
+    tempWord <<= 1;
+  }
+  if (shiftInd > 3)
+  {
+    return(0x4000);
+  }
+  else
+  {
+    // since bit 2-13 are part of the data stream, move them to be
+    // bits 5-16 (shift by 3)
+    tempWord >>= 3;
+    uint16_t MSB((tempWord >> 6) << 8);
+    uint16_t LSB((tempWord & 0b00111111));
+    uint16_t outputWord(MSB + LSB);
+    return outputWord;
+  }
+}
+

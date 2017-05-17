@@ -15,31 +15,30 @@
 */
 #include "com/catheter_commands.h"
 #include "hardware/digital_analog_conversions.h"
-
+#include <vector>
 
 #ifdef _MSC_VER
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
 #ifdef _DEBUG
-   #ifndef DBG_NEW
-      #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
-      #define new DBG_NEW
-   #endif
+  #ifndef DBG_NEW
+    #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
+    #define new DBG_NEW
+  #endif
 #endif  // _DEBUG
 #endif  // __MSC_VER
+
 
 /* calculate 8-bit fletcher checksum using blocksize=4 */
 // This is for error correction.
 uint8_t fletcher8(int len, const std::vector<uint8_t> &data)
 {
-  
   if (len <= data.size())
   {
     // The 8-bit fletcher checksum is using blocksize of 4.
-    // 
     uint8_t sum1(0), sum2(0);
-    for (int i(0); i<len; i++)
+    for (int i(0); i < len; i++)
     {
       // first 4 bits
       sum1 += (data[i] >> 4);
@@ -49,15 +48,14 @@ uint8_t fletcher8(int len, const std::vector<uint8_t> &data)
       sum1 += (data[i] & 15);
       sum2 += sum1;
 
-      //modulo 15
-      sum1 %= 16;   
+      // modulo 15
+      sum1 %= 16;
       sum2 %= 16;
     }
     return ((sum2) << 4) + (sum1);
   }
   return 0;
 }
-
 
 
 CatheterChannelCmdSet resetCmd()
@@ -67,7 +65,9 @@ CatheterChannelCmdSet resetCmd()
   return resetCmdSet;
 }
 
-CatheterChannelCmd emptyCommand() {
+
+CatheterChannelCmd emptyCommand()
+{
   CatheterChannelCmd cmd;
   cmd.channel = 0;
   cmd.currentMilliAmp = 0;
@@ -76,8 +76,6 @@ CatheterChannelCmd emptyCommand() {
   return cmd;
 }
 
-//overall encoding
-
 
 std::vector<uint8_t> encodeCommandSet(const CatheterChannelCmdSet& cmds, int pseqnum)
 {
@@ -85,7 +83,7 @@ std::vector<uint8_t> encodeCommandSet(const CatheterChannelCmdSet& cmds, int pse
   std::vector<uint8_t> tempEncoding;
 
   encodedSet.clear();
-  
+
   int n(cmds.commandList.size());
 
   tempEncoding = encodePreamble(pseqnum, n);
@@ -101,7 +99,7 @@ std::vector<uint8_t> encodeCommandSet(const CatheterChannelCmdSet& cmds, int pse
     encodedSet.insert(encodedSet.end(), tempEncoding.begin(), tempEncoding.end());
     tempEncoding.clear();
   }
-  
+
   tempEncoding = encodePostamble(pseqnum);
   encodedSet.insert(encodedSet.end(), tempEncoding.begin(), tempEncoding.end());
   uint8_t chksum = fletcher8(encodedSet.size(), encodedSet);
@@ -109,6 +107,7 @@ std::vector<uint8_t> encodeCommandSet(const CatheterChannelCmdSet& cmds, int pse
   // encode the preamble.
   return encodedSet;
 }
+
 
 std::vector<uint8_t> encodePreamble(int pseqnum, int ncmds)
 {
@@ -126,6 +125,7 @@ std::vector<uint8_t> encodePreamble(int pseqnum, int ncmds)
   return bytes;
 }
 
+
 std::vector<uint8_t> encodeSingleCommand(const CatheterChannelCmd& cmd)
 {
   std::vector<uint8_t> bytes;
@@ -134,8 +134,10 @@ std::vector<uint8_t> encodeSingleCommand(const CatheterChannelCmd& cmd)
   uint8_t encodedByte = 0;
   if (cmd.poll)   encodedByte |= (1 << POL_BIT);
   if (cmd.enable)     encodedByte |= (1 << ENA_BIT);
-  encodedByte |= (1 << UPD_BIT); //always update.
-  //if (cmd.update)   encodedByte |= (1 << UPD_BIT);
+  // always update.
+  encodedByte |= (1 << UPD_BIT);
+  // if (cmd.update)   encodedByte |= (1 << UPD_BIT);
+
   encodedByte |= (cmd.currentMilliAmp > 0.0) ? (DIR_POS << DIR_BIT) : (DIR_NEG << DIR_BIT);
 
   // bit 1-4 is the channel number
@@ -148,21 +150,23 @@ std::vector<uint8_t> encodeSingleCommand(const CatheterChannelCmd& cmd)
   {
     if (i == 0)
     {
-      bytes.push_back(firstByte);          // bits 1-4
+      // bits 1-4
+      bytes.push_back(firstByte);
     }
     else if (i == 1)
     {
       // bits 8-15  (first 6 bits of DAC data (in the lower 6) (modified to match the arduin0
-      bytes.push_back((dacSetting >> 6) & 63);   
+      bytes.push_back((dacSetting >> 6) & 63);
     }
     else if (i == 2)
     {
       // bits 16-23 (last 6 bits of DAC data)
-      bytes.push_back((dacSetting & 63));   
+      bytes.push_back((dacSetting & 63));
     }
   }
   return bytes;
 }
+
 
 std::vector<uint8_t> encodePostamble(int pseqnum)
 {
@@ -185,13 +189,11 @@ CatheterChannelCmd parseSingleCommand(const std::vector<uint8_t>& cmdBytes, int 
   CatheterChannelCmd result;
   // byte 1
   result.channel = cmdBytes[index] >> 4;
-
-
-  //expandCmdVal(, &poll, &en, &update, &dir);
+  // expandCmdVal(, &poll, &en, &update, &dir);
   result.poll = (cmdBytes[index] >> POL_BIT) & 1;
   result.enable = (cmdBytes[index] >> ENA_BIT) & 1;
   result.update = (cmdBytes[index] >> UPD_BIT) & 1;
-   
+
   result.dir = ((cmdBytes[index] >> DIR_BIT) & 1) ? DIR_POS : DIR_NEG;
 
 
@@ -199,7 +201,7 @@ CatheterChannelCmd parseSingleCommand(const std::vector<uint8_t>& cmdBytes, int 
   // pull off the DAC value:
   uint16_t cmdData(((uint16_t)(cmdBytes[index + 1]) << 6) + (cmdBytes[index + 2] % 64));
 
-  //convert the dac value to a double.
+  // convert the dac value to a double.
   result.currentMilliAmp = dac2MilliAmp(cmdData, result.dir);
 
   index += 3;
@@ -208,23 +210,29 @@ CatheterChannelCmd parseSingleCommand(const std::vector<uint8_t>& cmdBytes, int 
   {
     result.poll = true;
     uint16_t adcd1(static_cast<uint16_t> (cmdBytes[index]));
-    uint16_t adcd1a(adcd1  << 11);
-    uint16_t adcd1b(adcd1a >> 4);
-    uint16_t adcd2(static_cast<uint16_t> (cmdBytes[index+1]));
-    uint16_t adcd2a(adcd2 >> 1);
-    uint16_t adcData(adcd1b+adcd2a);
-    //convert adc bits to a double.
+    if ((adcd1 >> 6) == 1)
+    {
+      result.currentMilliAmp_ADC = -500.0;
+    }
+    else
+    {
+      uint16_t adcd1a(adcd1 << 6);
+      uint16_t adcd2(static_cast<uint16_t> (cmdBytes[index+1]));
+      uint16_t adcData(adcd1a+adcd2);
+    //  convert adc bits to a double.
     result.currentMilliAmp_ADC = adc2MilliAmp(adcData);
+    }
     index += 2;
   }
   return result;
 }
 
-// generate, populate, and return a reset command 
+
+// generate, populate, and return a reset command
 CatheterChannelCmdSet resetCommand()
 {
   CatheterChannelCmd cmd;
-  cmd.channel = 0; //global
+  cmd.channel = 0;
   cmd.currentMilliAmp = 0;
   cmd.currentMilliAmp_ADC = 0;
   cmd.poll = false;
@@ -245,6 +253,7 @@ void printData(const std::vector< uint8_t >& bytesRead)
   printf("\n");
 }
 
+
 int parseBytes2Cmds(int byteCount, std::vector<uint8_t>& bytesRead, std::vector<CatheterChannelCmd>& cmds)
 {
   int byteIndex(3);
@@ -255,6 +264,7 @@ int parseBytes2Cmds(int byteCount, std::vector<uint8_t>& bytesRead, std::vector<
   bytesRead.erase(bytesRead.begin(), bytesRead.begin() + byteCount);
   return 1;
 }
+
 
 int estResponseSize(const CatheterChannelCmdSet &commands)
 {
@@ -294,6 +304,7 @@ int parseFirstSecondByte(const std::vector < uint8_t > &inputBytes)
   }
   else return -1;
 }
+
 
 int parseThirdByte(const std::vector < uint8_t > &inputBytes)
 {

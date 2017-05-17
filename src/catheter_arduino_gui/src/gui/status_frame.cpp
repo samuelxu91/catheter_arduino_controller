@@ -1,109 +1,97 @@
-#include "gui/status_frame.h"
+/*
+  Copyright 2017 Russell Jackson
 
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+#include "gui/status_frame.h"
+#include <vector>
 StatusGrid:: ~StatusGrid()
 {
 }
 
+
 StatusGrid::StatusGrid(wxPanel* parentPanel):
-	wxFlexGridSizer(7, 4, 2, 10)
+  wxFlexGridSizer(7, 4, 2, 10)
 {
-	wxStaticText *channelIndex = new wxStaticText(parentPanel, -1, wxT("Channel #"));
-	wxStaticText *setMa = new wxStaticText(parentPanel, -1, wxT("Set Current"));
-	wxStaticText *senseMa = new wxStaticText(parentPanel, -1, wxT("Sensed Current"));
-	wxStaticText *enable = new wxStaticText(parentPanel, -1, wxT("enabled"));
+  wxStaticText *channelIndex = new wxStaticText(parentPanel, -1, wxT("Channel #"));
+  wxStaticText *setMa = new wxStaticText(parentPanel, -1, wxT("Set Current"));
+  wxStaticText *senseMa = new wxStaticText(parentPanel, -1, wxT("Sensed Current"));
+  wxStaticText *enable = new wxStaticText(parentPanel, -1, wxT("enabled"));
 
+  this->Add(channelIndex);
+  this->Add(setMa);
+  this->Add(senseMa);
+  this->Add(enable);
 
-	this->Add(channelIndex);
-	this->Add(setMa);
-	this->Add(senseMa);
-	this->Add(enable);
+  textCtrl_.clear();
+  for ( int index(0); index < 24; index++)
+  {
+    textCtrl_.push_back(new wxTextCtrl(parentPanel, -1));
+    textCtrl_[index]->SetEditable(false);
 
-	textCtrl.clear();
-	for ( int index(0); index < 24; index++)
-	{
-		textCtrl.push_back(new wxTextCtrl(parentPanel, -1));
-		textCtrl[index]->SetEditable(false);
-
-		switch (index % 4)
-		{
-		case 0: // channel number
-			textCtrl[index]->SetValue(wxString::Format(wxT("%d"), (index  >> 2)+1));
-			break;
-		case 1:
-		case 2:
-			textCtrl[index]->SetValue(wxT("0.00"));
-			break;
-		case 3:
-			textCtrl[index]->SetValue(wxT("false"));
-			break;
-		}
-		this->Add(textCtrl[index]);
-	}
-
-   
+    switch (index % 4)
+    {
+    case 0:  // channel number
+      textCtrl_[index]->SetValue(wxString::Format(wxT("%d"), (index  >> 2)+1));
+      break;
+    case 1:
+    case 2:
+      textCtrl_[index]->SetValue(wxT("0.00"));
+      break;
+    case 3:
+      textCtrl_[index]->SetValue(wxT("false"));
+      break;
+    }
+    this->Add(textCtrl_[index]);
+  }
 }
+
 
 bool StatusGrid::updateStatus(statusData* inputData)
 {
-	
-	boost::mutex::scoped_lock lock(inputData->statusMutex);
-	if (inputData->updated)
-	{
-		int cmdCount(inputData->inputCommands.size());
-		for (int index(0); index < cmdCount; index++)
-		{
-			int channelNum(inputData->inputCommands[index].channel);
-			int baseIndex(((channelNum - 1) << 2));
-			textCtrl[baseIndex + 1]->SetValue(wxString::Format(wxT("%f"), inputData->inputCommands[index].currentMilliAmp));
-			textCtrl[baseIndex + 2]->SetValue(wxString::Format(wxT("%f"), inputData->inputCommands[index].currentMilliAmp_ADC));
-			if (inputData->inputCommands[index].enable)
-			{
-				textCtrl[baseIndex + 3]->SetValue(wxT("true"));
-			}
-			else
-			{
-				textCtrl[baseIndex + 3]->SetValue(wxT("false"));
-			}
-		}
-		inputData->updated = false;
-		return true;
-	}
-	return false;
+  boost::mutex::scoped_lock lock(inputData->statusMutex_);
+  if (inputData->updated_)
+  {
+    int cmdCount(inputData->inputCommands_.size());
+    for (int index(0); index < cmdCount; index++)
+    {
+      int channelNum(inputData->inputCommands_[index].channel);
+      int baseIndex(((channelNum - 1) << 2));
+
+      textCtrl_[baseIndex + 1]->SetValue(wxString::Format(wxT("%f"),
+        inputData->inputCommands_[index].currentMilliAmp));
+      textCtrl_[baseIndex + 2]->SetValue(wxString::Format(wxT("%f"),
+        inputData->inputCommands_[index].currentMilliAmp_ADC));
+
+      if (inputData->inputCommands_[index].enable)
+      {
+        textCtrl_[baseIndex + 3]->SetValue(wxT("true"));
+      }
+      else
+      {
+        textCtrl_[baseIndex + 3]->SetValue(wxT("false"));
+      }
+    }
+    inputData->updated_ = false;
+    return true;
+  }
+  return false;
 }
 
 
-void statusData::updateCmdList(std::vector<CatheterChannelCmd> & inputCommands_)
+void statusData::updateCmdList(std::vector<CatheterChannelCmd> &inputCommands)
 {
-	boost::mutex::scoped_lock lock(this->statusMutex);
-	this->inputCommands = inputCommands_;
-	this->updated = true;
-
+  boost::mutex::scoped_lock lock(this->statusMutex_);
+  this->inputCommands_ = inputCommands;
+  this->updated_ = true;
 }
-
- /*  wxPanel *panel = new wxPanel(this, -1);
-
-  wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
-
-  wxFlexGridSizer *fgs = new wxFlexGridSizer(3, 2, 9, 25);
-
-
-
-  wxTextCtrl *tc1 = new wxTextCtrl(panel, -1);
-  wxTextCtrl *tc2 = new wxTextCtrl(panel, -1);
-  wxTextCtrl *tc3 = new wxTextCtrl(panel, -1, wxT(""),
-      wxPoint(-1, -1), wxSize(-1, -1), wxTE_MULTILINE);
-
-  fgs->Add(thetitle);
-  fgs->Add(tc1, 1, wxEXPAND);
-  fgs->Add(author);
-  fgs->Add(tc2, 1, wxEXPAND);
-  fgs->Add(review, 1, wxEXPAND);
-  fgs->Add(tc3, 1, wxEXPAND);
-
-  fgs->AddGrowableRow(2, 1);
-  fgs->AddGrowableCol(1, 1);
-
-  hbox->Add(fgs, 1, wxALL | wxEXPAND, 15);
-  panel->SetSizer(hbox);
-  Centre();
-} */

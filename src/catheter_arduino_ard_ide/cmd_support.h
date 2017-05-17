@@ -203,9 +203,13 @@ uint8_t processSingleChannel(int i, channelStatus &local_channel, uint8_t cmdVal
     // DAC lower 6 bits
     responseBytes[*responseIndex+2] = DACL;
     // ADC upper 6 bits
-    responseBytes[*responseIndex+3] = (uint8_t) ((ADCm >> 8));
+    uint16_t  ADCoutput(processADC(ADCm));
+    //first 4 bits should be a 0.
+
+
+    responseBytes[*responseIndex+3] = (uint8_t) ((ADCoutput >> 8));
     // ADC lower 6 bits
-    responseBytes[*responseIndex+4] = (uint8_t) (0b11111111 & ADCm);
+    responseBytes[*responseIndex+4] = (uint8_t) (0b11111111 & ADCoutput);
     *responseIndex += 5;
   return 1;
   }  // if(poll)

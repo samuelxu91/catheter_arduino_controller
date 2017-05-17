@@ -1,107 +1,321 @@
-#pragma once
-#ifndef CATHETER_GUI_APP_H
-#define CATHETER_GUI_APP_H
+#ifndef CATHETER_GUI_CATHETER_GUI_H
+#define CATHETER_GUI_CATHETER_GUI_H
 
-
-#include "ser/serial_thread.h"
 
 #include <wx/wx.h>
-
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
-
 #include "gui/catheter_grid.h"
 #include "gui/status_text.h"
-
 #include "gui/status_frame.h"
+#include "ser/serial_thread.h"
+#include <vector>
 
-//This file defines the gui layout
+// This file defines the gui layout
 
-class CatheterGuiFrame : public wxFrame {
+class CatheterGuiFrame : public wxFrame
+{
 public:
-    
-	CatheterGuiFrame(const wxString& title, SerialThreadObject *);
+    /**
+     * @brief The catheter gui fram constructor for starting the frame up.
+     *
+     * This rrquires a pointer to the serialthread object for communicating with the arduino.
+     * @param title string of the the frame.
+     * @param a pointer to the serialthread object.
+     */
+    explicit CatheterGuiFrame(const wxString& title, SerialThreadObject *);
+
+    /**
+     * @brief The GUI frame destructor
+     */
     ~CatheterGuiFrame();
 
-    // control buttons
+    /**
+     * @brief Refreshes the serial communication bus.
+     *
+     * @param The incomming event.
+     */
     void OnRefreshSerialButtonClicked(wxCommandEvent& e);
-    void OnSelectPlayfileButtonClicked(wxCommandEvent& e);
-    void OnNewPlayfileButtonClicked(wxCommandEvent& e);
-    void OnSavePlayfileButtonClicked(wxCommandEvent& e);
-    void OnSendCommandsButtonClicked(wxCommandEvent& e);
-    void OnSendResetButtonClicked(wxCommandEvent& e);
-	void OnSendPollButtonClicked(wxCommandEvent& e);
-	void onIdle(wxIdleEvent& e);
 
-    enum {
+    /**
+     * @brief Loads a new play file
+     *
+     * @param The incomming event.
+     */
+    void OnSelectPlayfileButtonClicked(wxCommandEvent& e);
+
+    /**
+     * @brief creates a new play file (empties the grid)
+     *
+     * @param The incomming event.
+     */
+    void OnNewPlayfileButtonClicked(wxCommandEvent& e);
+
+    /**
+     * @brief Saves a playfile
+     *
+     * @param The incoming event
+     */
+    void OnSavePlayfileButtonClicked(wxCommandEvent& e);
+
+    /**
+     * @brief Sends commands to the arduino.
+     *
+     * @param The incoming event
+     */
+    void OnSendCommandsButtonClicked(wxCommandEvent& e);
+
+    /**
+     * @brief sends a reset command
+     *
+     * @param The incoming event
+     */
+    void OnSendResetButtonClicked(wxCommandEvent& e);
+
+    /**
+     * @brief Pings the arduino for full system status.
+     *
+     * @param The incoming event
+     */
+    void OnSendPollButtonClicked(wxCommandEvent& e);
+
+    /**
+     * @brief Idle refresh function
+     *
+     * @param The incoming event
+     */
+    void onIdle(wxIdleEvent& e);
+
+    /**
+     * @brief Enumerated list of event ID numbers.
+     *
+     * These events start at 1024 and increment by 1.
+     */
+    enum
+    {
         ID_SELECT_PLAYFILE_BUTTON = 1024,
         ID_NEW_PLAYFILE_BUTTON,
         ID_SAVE_PLAYFILE_BUTTON,
         ID_SEND_COMMANDS_BUTTON,
-        ID_SEND_RESET_BUTTON, 
+        ID_SEND_RESET_BUTTON,
         ID_REFRESH_SERIAL_BUTTON,
-		ID_SEND_POLL_BUTTON
+        ID_SEND_POLL_BUTTON
     };
 
+
+    /**
+     * @brief Declares the event table for the GUI
+     */
     wxDECLARE_EVENT_TABLE();
 
-	
-
 private:
-    // status panel
+    /**
+     * @brief set the status text
+     *
+     * @param the incoming string to append to the status text.
+     */
     void setStatusText(const wxString& msg);
-    // control buttons
+
+    /**
+     * @brief warn about overriting a play file
+     */
     void warnSavePlayfile();
+
+    /**
+     * @brief Save the new play file
+     */
     void savePlayfile();
+
+    /**
+     * @brief open a playfile
+     *
+     * @return a wxString path to the play file.
+     */
     wxString openPlayfile();
+
+    /**
+     * @brief load a playfile based on the input path
+     *
+     * @param the wxString path to the play file.
+     */
     void loadPlayfile(const wxString& path);
+
+    /**
+     * @TODO(rcj33) identify the purpose of this play file and if removal is necessary.
+     */
     void unloadPlayfile(const wxString& path);
+
+    /**
+     * @brief Queue up commands to send to the arduino
+     */
     bool sendCommands(const std::vector<CatheterChannelCmdSet> &cmdVect);
+
+    /**
+     * @brief Get the grid commands and send them.
+     *
+     * @return true/false based on success.
+     */
     bool sendGridCommands();
+
+    /**
+     * @brief Sends the reset commands to the arduino.
+     *
+     * @return true/false based on success.
+     */
     bool sendResetCommand();
-	bool sendPollCommand();
+
+    /**
+     * @brief Sends the Poll command to the arduino
+     *
+     * @return true/false based on success.
+     */
+    bool sendPollCommand();
+
+    /**
+     * @brief Refreshes the Serial connection.
+     *
+     * @return true/false based on success.
+     */
     bool refreshSerialConnection();
+
+    /**
+     * @brief closes the serial connection.
+     *
+     * @return true/false based on success.
+     */
     bool closeSerialConnection();
+
+    /**
+     * @brief convert a catheter channel command to a wxString object.
+     *
+     * @param a single channel catheter command.
+     */
     wxString wxToString(const CatheterChannelCmd &cmd);
+
+    /**
+     * @brief summarize the commands into a text object.
+     *
+     * @param the vector of catheter commands.
+     */
     void wxSummarizeCmds(const std::vector<CatheterChannelCmd> &cmds);
 
-    wxPanel* parentPanel;
-    CatheterGrid* grid;
+    /**
+     * @brief The main panel that holds all of the elements
+     */
+    wxPanel* parentPanel_;
 
-    // status panel
-    //wxStaticText* statusText;
-	CatheterStatusText *statusText;
-	incomingText* statusTextData;
 
-	//status Grid
-	statusData * statusGridCmdPtr;
-	StatusGrid * statusGridPtr;
+    /**
+     * @brief The catheter grid object (pointer).
+     */
+    CatheterGrid* grid_;
 
-    // control buttons
-    wxButton* selectPlayfileButton;
-    wxButton* newPlayfileButton;
-    wxButton* savePlayfileButton;
-    wxButton* sendCommandsButton;
-    wxButton* sendResetButton;
-	wxButton* pollButton;
-    wxButton* refreshSerialButton;
-    bool playfileSaved;
-    wxString playfilePath;
 
-	SerialThreadObject *serialObject;
-	
+    /**
+     * @brief The catheter status text object (pointer).
+     */
+    CatheterStatusText *statusText_;
+
+    /**
+     * @brief The incoming status Text.
+     */
+    incomingText* statusTextData_;
+
+    /**
+     * @brief The status Data  pointer for commands.
+     */
+    statusData * statusGridCmdPtr_;
+
+    /**
+     * @brief a pointer to the status Grid
+     */
+    StatusGrid * statusGridPtr_;
+
+    /**
+     * @brief pointer to the select playfile button
+     */
+    wxButton* selectPlayfileButton_;
+
+    /**
+     * @brief pointer to the new playfile button
+     */
+    wxButton* newPlayfileButton_;
+
+    /**
+     * @brief pointer to the save playfile button
+     */
+    wxButton* savePlayfileButton_;
+
+    /**
+     * @brief pointer to the send commands button
+     */
+    wxButton* sendCommandsButton_;
+
+    /**
+     * @brief pointer to the send reset button.
+     */
+    wxButton* sendResetButton_;
+
+    /**
+     * @brief pointer to the poll button
+     */
+    wxButton* pollButton_;
+
+    /**
+     * @brief pointer to the refresh serial button
+     */
+    wxButton* refreshSerialButton_;
+
+    /**
+     * @brief playfile saved status.
+     */
+    bool playfileSaved_;
+
+    /**
+     * @brief path to the play file
+     */
+    wxString playfilePath_;
+
+    /**
+     * @brief Pointer to the serial thread object
+     */
+    SerialThreadObject *serialObject_;
 };
 
-class CatheterGuiApp : public wxApp {
+
+/**
+ * @brief The catheter GUI application object
+ *
+ * This object defines the entrypoint of the gui.
+ */
+class CatheterGuiApp : public wxApp
+{
 public:
+    /**
+     * @brief App entry point.
+     *
+     * @return bool to indicate success.
+     */
     bool OnInit();
-	int OnExit();
+
+    /**
+     * @brief App exit point.
+     *
+     * @return int to indicate exit code
+     */
+    int OnExit();
 
 private:
-	CatheterGuiFrame* gui;
-	// thead object pointer
-	SerialThreadObject *serialObject;
+    /**
+     * @brief a pointer to the frame object.
+     */
+    CatheterGuiFrame* gui_;
+
+    /**
+     * @brief a pointer to the frame object.
+     */
+    SerialThreadObject *serialObject_;
 };
 
 
-#endif
+#endif  // CATHETER_GUI_CATHETER_GUI_H

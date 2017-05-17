@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 2.8)
 project(catheter_arduino_gui)
 
 
-
 find_package(catkin)
 
 find_package(Boost COMPONENTS system thread REQUIRED)
@@ -12,14 +11,14 @@ find_package(wxWidgets COMPONENTS core base adv propgrid REQUIRED )
 find_package(GTest REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -O0" )
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 
 
 IF(catkin_FOUND)
 
 MESSAGE(Found Catkin:)
 
-#find_package(catkin REQUIRED COMPONENTS roslint roscpp)
+find_package(catkin REQUIRED COMPONENTS roslint roscpp)
 
 catkin_package(
       INCLUDE_DIRS inc
@@ -162,7 +161,7 @@ if(roslint_FOUND)
 
 roslint_cpp()
 
-#roslint_add_test()
+roslint_add_test()
 
 endif()
 
@@ -177,10 +176,6 @@ target_link_libraries(
     pthread
 )
 
-
-install(DIRECTORY test/
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/test
-)
 
 endif()
 

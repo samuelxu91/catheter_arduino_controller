@@ -59,9 +59,10 @@ This guide is meant to elaborate on the arduino serial communication protocol:
 		byte C: bits 1-2: don't care
 		byte C: bits 3-8: LSB 6 bits of the DAC.
 		(Bytes D and E are only present if the Poll option is high)
-		bits D: bits 1-2: don't care
+		bits D: bit 1: don't care. (Set to zero) 
+        bits D: bit 2: When this bit is high, there is an error in reading the ADC. 
 		bits D: bits 3-8: MSB of ADC.
-		bits E: bits 1-2: don't care
+		bits E: bits 1-2: don't care. (Set to zero)
 		bits E: bits 3-8: LSB of ADC.
 
 

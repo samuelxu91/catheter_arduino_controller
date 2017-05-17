@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-#pragma once
+
 #ifndef CATHETER_ARDUINO_GUI_SIMPLE_THREAD_H
 #define CATHETER_ARDUINO_GUI_SIMPLE_THREAD_H
 

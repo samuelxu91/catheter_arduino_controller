@@ -1,5 +1,5 @@
-#ifndef CATHETER_GRID_H
-#define CATHETER_GRID_H
+#ifndef CATHETER_GUI_CATHETER_GRID_H
+#define CATHETER_GUI_CATHETER_GRID_H
 
 #include "wx/wx.h"
 #include "wx/panel.h"
@@ -13,24 +13,24 @@
 #include "com/catheter_commands.h"
 
 // This file defines the grid in which commands are entered and run.
-// This object does not require any threaded communication as it is only 
+// This object does not require any threaded communication as it is only
 // changed by the main thread.
-
-class CatheterGrid : public wxGrid {
+class CatheterGrid : public wxGrid
+{
     public:
-    CatheterGrid(wxPanel* parent);
+    explicit CatheterGrid(wxPanel* parent);
     ~CatheterGrid();
 
     void OnGridCellChanging(wxGridEvent& e);
 
     void SetCommands(const std::vector<CatheterChannelCmdSet>& cmds);
-	void GetCommands(std::vector<CatheterChannelCmdSet>& cmds);
+    void GetCommands(std::vector<CatheterChannelCmdSet>& cmds);
     void ResetDefault();
 
     wxDECLARE_EVENT_TABLE();
 
     private:
-	void RecalculateGridSize(int rows);
+    void RecalculateGridSize(int rows);
     void setRowReadOnly(int row, bool readOnly);
     void formatDefaultRow(int row);
     void formatDefaultGrid(int nrows);
@@ -39,7 +39,7 @@ class CatheterGrid : public wxGrid {
     bool isGridCellEmpty(int row, int col);
     bool isGridRowComplete(int row);
 
-	long parseGridRow(int row, CatheterChannelCmd& c); 
+    int64_t parseGridRow(int row, CatheterChannelCmd& c);
 
     void addGridRow(bool readOnly);
     void setGridRowChannel(int row, int channel);
@@ -55,4 +55,4 @@ class CatheterGrid : public wxGrid {
     unsigned int cmdCount;
 };
 
-#endif
+#endif  // CATHETER_GUI_CATHETER_GRID_H
