@@ -46,7 +46,6 @@ TEST(ard_hardware_conv, DAC_ADC)
 }
 
 
-
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);

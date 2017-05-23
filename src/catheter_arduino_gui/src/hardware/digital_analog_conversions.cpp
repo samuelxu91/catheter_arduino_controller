@@ -14,13 +14,14 @@
   limitations under the License.
 */
 
-#include "hardware/digital_analog_conversions.h"
 
+#include "hardware/digital_analog_conversions.h"
 
 double adc2MilliAmp(uint16_t dataIn)
 {
   // The ADC currently uses 12 bits (0-4095) to measure the range of 0-5 V
   // The voltage is sampled from a 1 ohm resistor with a 10x gain amplifier.
+
 
   double data_d(static_cast<double> (dataIn));
 
@@ -33,11 +34,9 @@ double adc2MilliAmp(uint16_t dataIn)
 }
 
 
-
 uint16_t milliAmp2Dac(double milliAmp)
 {
-  double dacVal(milliAmp);
-  dacVal *= (dacVal < 0.0) ? (-1.0) : (1.0);   // ensure the data is positive.
+  double dacVal(abs(milliAmp));
   // @TODO(rcj) Break down the 12.8 multiplier into its constituent components.
 
   dacVal *= 12.8;  // this constant is from previous code (needs to be defined)
