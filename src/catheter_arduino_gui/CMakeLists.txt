@@ -176,6 +176,13 @@ target_link_libraries(
     pthread
 )
 
+catkin_add_gtest(test_adc_dac test/test_adc_dac.cpp WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+target_link_libraries(
+    test_adc_dac
+    catheter_analog_digital_libs
+    ${GTEST_LIBRARIES}
+    pthread
+)
 
 endif()
 
