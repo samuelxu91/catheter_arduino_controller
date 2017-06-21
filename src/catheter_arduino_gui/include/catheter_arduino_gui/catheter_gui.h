@@ -1,14 +1,31 @@
-#ifndef CATHETER_GUI_CATHETER_GUI_H
-#define CATHETER_GUI_CATHETER_GUI_H
+/*
+  Copyright 2017 Russell Jackson
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+
+#ifndef CATHETER_ARDUINO_GUI_CATHETER_GUI_H
+#define CATHETER_ARDUINO_GUI_CATHETER_GUI_H
 
 
 #include <wx/wx.h>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
-#include "gui/catheter_grid.h"
-#include "gui/status_text.h"
-#include "gui/status_frame.h"
-#include "ser/serial_thread.h"
+#include "catheter_arduino_gui/catheter_grid.h"
+#include "catheter_arduino_gui/status_text.h"
+#include "catheter_arduino_gui/status_frame.h"
+#include "catheter_arduino_gui/serial_thread.h"
 #include <vector>
 
 // This file defines the gui layout
@@ -318,4 +335,4 @@ private:
 };
 
 
-#endif  // CATHETER_GUI_CATHETER_GUI_H
+#endif  // CATHETER_ARDUINO_GUI_CATHETER_GUI_H

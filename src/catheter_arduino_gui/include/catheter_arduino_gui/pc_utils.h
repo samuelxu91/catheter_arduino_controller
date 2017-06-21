@@ -15,10 +15,10 @@
 */
 
 // The functions here seem important but another poorly scoped header file.
-#ifndef PC_UTILS_H
-#define PC_UTILS_H
+#ifndef CATHETER_ARDUINO_GUI_PC_UTILS_H
+#define CATHETER_ARDUINO_GUI_PC_UTILS_H
 
-#include "com/catheter_commands.h"
+#include "catheter_arduino_gui/catheter_commands.h"
 #include <vector>
 #include <string>
 
@@ -61,4 +61,4 @@ void print_string_as_bits(int len, std::string s);
 
 void print_bytes_as_bits(int len, std::vector<uint8_t> bytes);
 
-#endif
+#endif  // CATHETER_ARDUINO_GUI_PC_UTILS_H

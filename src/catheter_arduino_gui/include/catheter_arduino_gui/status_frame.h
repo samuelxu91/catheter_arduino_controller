@@ -14,15 +14,15 @@
   limitations under the License.
 */
 
-#ifndef CATHETER_GUI_STATUS_FRAME_H
-#define CATHETER_GUI_STATUS_FRAME_H
+#ifndef CATHETER_ARDUINO_GUI_STATUS_FRAME_H
+#define CATHETER_ARDUINO_GUI_STATUS_FRAME_H
 
 
 #include <wx/wx.h>
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
-#include "com/catheter_commands.h"
+#include "catheter_arduino_gui/catheter_commands.h"
 #include <vector>
 
 // This files defines the display class which shows the current status of individual
@@ -93,4 +93,4 @@ private:
   std::vector < wxTextCtrl* > textCtrl_;
 };
 
-#endif  // CATHETER_GUI_STATUS_FRAME_H
+#endif  // CATHETER_ARDUINO_GUI_STATUS_FRAME_H

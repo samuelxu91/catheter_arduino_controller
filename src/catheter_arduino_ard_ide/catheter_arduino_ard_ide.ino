@@ -55,16 +55,27 @@ unsigned int camera_counter;
 bool mriStatOld;
 
 /**
- * @brief The Arduino time at which the MRI begins scanning.
+ * @brief The MR scanning duration in which the currents are turned off.
+ * 
+ * The duration is defined in scan lines.
  */
-unsigned long scanStartTime = 0;
+double scanLines = 4;
+
+
+volatile unsigned long scanStartTime;
+unsigned long scanDuration;
 
 /**
- * @brief The MR scanning duration in ms in which the currents are turned off.
+ * @brief The interrupt handler is meant to always ensure that the current is disabled.
  */
-unsigned long scanDuration = 40;
-
-
+void disableChannels()
+{
+  scanStartTime = millis();
+  for (int i = 0; i < NCHANNELS; i++)
+    {
+      zero(i);
+    }
+}
 
 /**
  * @brief The Arduino executes this function once when power on.
@@ -77,11 +88,18 @@ void setup()
 	camera_counter = 0;
   mriStatOld = false;
 
+  // Here, the scanLines is converted to ms.
+  // Each line takes 2.88 ms. 
+  // The arduino turn off delay of 0.5 ms is also added.
+  scanDuration = ceil(scanLines*2.88+0.5);
+
   for ( int i = 0; i < 512; i++)
   {
     inputBytes[i] = 0;
     outputBytes[i] = 0;
   }
+
+  attachInterrupt(mriPin, disableChannels, RISING);
 
 	delay(START_DELAY);
 }
@@ -121,25 +139,17 @@ void loop()
   int mriStat(camera_write(camera_counter));
 
   // If the MR scanner is pinging.
-  if (mriStat && !mriStatOld)
-  {
-    mriStatOld = true;
-    scanStartTime = millis();
-
-    for (int i = 0; i < NCHANNELS; i++)
-    {
-      DAC_write(i, 0);
-    }
-  }
 
   // If the MR scanner is neither pinging or scanning.
-  if (!mriStat && mriStatOld && (scanStartTime + scanDuration) <  millis())
+  if (scanStartTime > 0 && (scanStartTime + scanDuration) <  millis())
   {
-    mriStatOld = false;
-
+    scanStartTime = 0;
     for (int i = 0; i  < NCHANNELS; i++)
     {
-      DAC_write(i, channelList[i].DAC_val);
+      set_direction(i,channelList[i].dir);
+      toggle_enable(i, 1);
+      
     }
   }
 }
+

@@ -18,8 +18,8 @@
 #include <string>
 #include <vector>
 #include <gtest/gtest.h>
-#include "com/catheter_commands.h"
-#include "com/pc_utils.h"
+#include "catheter_arduino_gui/catheter_commands.h"
+#include "catheter_arduino_gui/pc_utils.h"
 
 
 TEST(pc_utils, testCurrentGen)
