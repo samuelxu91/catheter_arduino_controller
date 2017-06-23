@@ -10,10 +10,6 @@ find_package(GTest REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -O0" )
 
-IF(catkin_FOUND)
-
-MESSAGE(Found Catkin:)
-
 find_package(catkin REQUIRED COMPONENTS roslint)
 
 catkin_package(
@@ -25,7 +21,6 @@ catkin_package(
         wxWidgets COMPONENTS core base adv propgrid
 )
 
-ENDIF()
 
 
 include_directories(
@@ -152,15 +147,9 @@ ${wxWidgets_ADVANCED_LIBRARIES}
 ${wxWidgets_LIBRARIES}
 )
 
-if(roslint_FOUND)
-
 roslint_cpp()
 
 roslint_add_test()
-
-endif()
-
-if(catkin_FOUND)
 
 # Add gtest for pc_utils
 catkin_add_gtest(test_pc_utils test/test_pc_utils.cpp WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
@@ -178,8 +167,3 @@ target_link_libraries(
     ${GTEST_LIBRARIES}
     pthread
 )
-
-endif()
-
-
-
