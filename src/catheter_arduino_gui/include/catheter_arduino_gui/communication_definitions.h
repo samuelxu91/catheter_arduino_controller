@@ -13,9 +13,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-#ifndef COM_DEFS_H
-#define COM_DEFS_H
-
+#ifndef CATHETER_ARDUINO_GUI_COMMUNICATION_DEFINITIONS_H
+#define CATHETER_ARDUINO_GUI_COMMUNICATION_DEFINITIONS_H
 
 // This file list communication based definitions.
 // examples include packet size and channel count.
@@ -44,7 +43,8 @@
 // #define NCMDS(PCKLEN) ((PCKLEN-PRE_LEN-POST_LEN-PCK_CHK_LEN)/CMD_LEN)
 
 /* macro to compute the size of a response packet */
-// #define RESPONSE_LEN(ncmds, global, npolled) (3 + 3 * (global ? NCHANNELS : ncmds) + 2 * ((global && npolled) ? NCHANNELS : npolled))
+// #define RESPONSE_LEN(ncmds, global, npolled)
+//   (3 + 3 * (global ? NCHANNELS : ncmds) + 2 * ((global && npolled) ? NCHANNELS : npolled))
 
 #define PCK_OK 1
 #define DAC_RES 4096
@@ -61,4 +61,4 @@
 enum dir_t { DIR_POS = 1, DIR_NEG = 0 };
 
 
-#endif  // COM_DEFS_H
+#endif  // CATHETER_ARDUINO_GUI_COMMUNICATION_DEFINITIONS_H

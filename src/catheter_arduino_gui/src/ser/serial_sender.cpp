@@ -19,9 +19,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "com/pc_utils.h"
-#include "ser/serial_sender.h"
-#include "ser/simple_serial.h"
+#include "catheter_arduino_gui/pc_utils.h"
+#include "catheter_arduino_gui/serial_sender.h"
+#include "catheter_arduino_gui/simple_serial.h"
 
 #ifdef _MSC_VER
 #define _CRTDBG_MAP_ALLOC

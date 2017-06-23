@@ -15,7 +15,8 @@
 */
 
 
-#include "hardware/digital_analog_conversions.h"
+#include "catheter_arduino_gui/digital_analog_conversions.h"
+
 
 double adc2MilliAmp(uint16_t dataIn)
 {

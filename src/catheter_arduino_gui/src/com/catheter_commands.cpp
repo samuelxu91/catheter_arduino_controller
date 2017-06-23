@@ -13,8 +13,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-#include "com/catheter_commands.h"
-#include "hardware/digital_analog_conversions.h"
+#include "catheter_arduino_gui/catheter_commands.h"
+#include "catheter_arduino_gui/digital_analog_conversions.h"
 #include <vector>
 
 #ifdef _MSC_VER

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-#include "com/catheter_commands.h"
+#include "catheter_arduino_gui/catheter_commands.h"
 #include <algorithm>
 #include <string>
 #include <vector>

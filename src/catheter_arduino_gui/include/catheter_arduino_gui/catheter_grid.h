@@ -1,5 +1,21 @@
-#ifndef CATHETER_GUI_CATHETER_GRID_H
-#define CATHETER_GUI_CATHETER_GRID_H
+/*
+  Copyright 2017 Russell Jackson
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+#ifndef CATHETER_ARDUINO_GUI_CATHETER_GRID_H
+#define CATHETER_ARDUINO_GUI_CATHETER_GRID_H
 
 #include "wx/wx.h"
 #include "wx/panel.h"
@@ -9,8 +25,8 @@
 #include "wx/generic/grideditors.h"
 #include <vector>
 
-#include "com/communication_definitions.h"
-#include "com/catheter_commands.h"
+#include "catheter_arduino_gui/communication_definitions.h"
+#include "catheter_arduino_gui/catheter_commands.h"
 
 // This file defines the grid in which commands are entered and run.
 // This object does not require any threaded communication as it is only
@@ -55,4 +71,4 @@ class CatheterGrid : public wxGrid
     unsigned int cmdCount;
 };
 
-#endif  // CATHETER_GUI_CATHETER_GRID_H
+#endif  // CATHETER_ARDUINO_GUI_CATHETER_GRID_H

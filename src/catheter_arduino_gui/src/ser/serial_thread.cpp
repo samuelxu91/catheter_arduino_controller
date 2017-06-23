@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-#include "ser/serial_thread.h"
+#include "catheter_arduino_gui/serial_thread.h"
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>

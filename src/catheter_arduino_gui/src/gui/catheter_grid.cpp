@@ -13,6 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+
 #include <wx/wx.h>
 
 
@@ -22,7 +23,7 @@
 #include <wx/generic/gridctrl.h>
 #include <wx/generic/grideditors.h>
 
-#include "gui/catheter_grid.h"
+#include "catheter_arduino_gui/catheter_grid.h"
 
 
 #include <boost/bind.hpp>
@@ -30,7 +31,7 @@
 
 #include <vector>
 
-#include "com/communication_definitions.h"
+#include "catheter_arduino_gui/communication_definitions.h"
 
 #ifdef _MSC_VER
 

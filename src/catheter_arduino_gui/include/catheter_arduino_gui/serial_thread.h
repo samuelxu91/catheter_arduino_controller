@@ -15,15 +15,15 @@
 */
 
 
-#ifndef CATHETER_ARDUINO_GUI_SIMPLE_THREAD_H
-#define CATHETER_ARDUINO_GUI_SIMPLE_THREAD_H
+#ifndef CATHETER_ARDUINO_GUI_SERIAL_THREAD_H
+#define CATHETER_ARDUINO_GUI_SERIAL_THREAD_H
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-#include "com/catheter_commands.h"
-#include "ser/serial_sender.h"
-#include "gui/status_text.h"
-#include "gui/status_frame.h"
+#include "catheter_arduino_gui/catheter_commands.h"
+#include "catheter_arduino_gui/serial_sender.h"
+#include "catheter_arduino_gui/status_text.h"
+#include "catheter_arduino_gui/status_frame.h"
 
 #include <vector>
 
@@ -174,4 +174,4 @@ private:
 };
 
 
-#endif  // CATHETER_ARDUINO_GUI_SIMPLE_THREAD_H
+#endif  // CATHETER_ARDUINO_GUI_SERIAL_THREAD_H

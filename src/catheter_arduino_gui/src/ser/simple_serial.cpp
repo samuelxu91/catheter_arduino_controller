@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-#include "ser/simple_serial.h"
+#include "catheter_arduino_gui/simple_serial.h"
 #include <stdio.h>
 #include <iostream>
 #include <string>

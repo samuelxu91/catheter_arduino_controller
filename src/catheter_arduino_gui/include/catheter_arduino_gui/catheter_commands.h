@@ -16,10 +16,10 @@
 
 #pragma once
 
-#ifndef CATHETER_ARDUINO_GUI_CATHETER_CHANNEL_COMMANDS_H
-#define CATHETER_ARDUINO_GUI_CATHETER_CHANNEL_COMMANDS_H
+#ifndef CATHETER_ARDUINO_GUI_CATHETER_COMMANDS_H
+#define CATHETER_ARDUINO_GUI_CATHETER_COMMANDS_H
 
-#include "com/communication_definitions.h"
+#include "catheter_arduino_gui/communication_definitions.h"
 
 #include <vector>
 #include <cstring>
@@ -182,4 +182,4 @@ int estResponseSize(const CatheterChannelCmdSet &);
 
 void printData(const std::vector< uint8_t >& bytesRead);
 
-#endif  // CATHETER_ARDUINO_GUI_CATHETER_CHANNEL_COMMANDS_H
+#endif  // CATHETER_ARDUINO_GUI_CATHETER_COMMANDS_H

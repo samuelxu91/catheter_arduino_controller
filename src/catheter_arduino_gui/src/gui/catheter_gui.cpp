@@ -13,9 +13,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-#include "gui/catheter_gui.h"
-#include "com/pc_utils.h"
-#include "ser/serial_thread.h"
+#include "catheter_arduino_gui/catheter_gui.h"
+#include "catheter_arduino_gui/pc_utils.h"
+#include "catheter_arduino_gui/serial_thread.h"
 #include <wx/wfstream.h>
 #include <wx/numdlg.h>
 #include <vector>

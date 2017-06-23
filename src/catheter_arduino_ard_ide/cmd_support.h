@@ -216,7 +216,7 @@ uint8_t processSingleChannel(int i, channelStatus &local_channel, uint8_t cmdVal
   else
   {
     // enable or disable channel
-    toggle_enable(i, en);
+    // toggle_enable(i, en);
     // saved but useless.
     local_channel.enable = en;
     // set DAC value if necessary

@@ -40,19 +40,29 @@ void toggle_enable(int channel, int en) {
  */
 void set_direction(int channel, int direction)
 {
+  toggle_enable(channel, 0);
   if (direction == 0)
   {
-    digitalWrite(H_Neg_pins[channel], DIR_ON);
     digitalWrite(H_Pos_pins[channel], !DIR_ON);
+    digitalWrite(H_Neg_pins[channel], DIR_ON);
   }
   else
   {
-    digitalWrite(H_Pos_pins[channel], DIR_ON);
     digitalWrite(H_Neg_pins[channel], !DIR_ON);
+    digitalWrite(H_Pos_pins[channel], DIR_ON);
   }
+  toggle_enable(channel, 1);
 }
 
+// zeros out the channel completely
+void zero(int channel)
+{
+  toggle_enable(channel, 0);
+  
+  digitalWrite(H_Neg_pins[channel], DIR_ON);
+  digitalWrite(H_Pos_pins[channel], DIR_ON);
 
+}
 /** 
  * @brief translate the 16 bit SPI data received from the MCP3201 ADC to the 12 bits sent to the PC 
  *
