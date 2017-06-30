@@ -147,7 +147,7 @@ void loop()
     for (int i = 0; i  < NCHANNELS; i++)
     {
       set_direction(i,channelList[i].dir);
-      toggle_enable(i, 1);
+      //toggle_enable(i, 1);
       
     }
   }

@@ -130,8 +130,8 @@ void pin_init()
     digitalWrite(ADC_CS_pins[i], !CS_EN);
     digitalWrite(DAC_CS_pins[i], !CS_EN);
     digitalWrite(DAC_LDAC_pins[i], LOW);
-    digitalWrite(H_Enable_pins[i], !H_EN);
-    digitalWrite(H_Neg_pins[i], !DIR_ON);
+    digitalWrite(H_Enable_pins[i], H_EN);  //digitalWrite(H_Enable_pins[i], !H_EN);
+    digitalWrite(H_Neg_pins[i], DIR_ON);  //digitalWrite(H_Neg_pins[i], !DIR_ON);
     digitalWrite(H_Pos_pins[i], DIR_ON);
   }
 
