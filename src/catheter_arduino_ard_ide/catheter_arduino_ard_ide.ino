@@ -47,12 +47,12 @@ uint8_t outputBytes[512];
  */
 unsigned int camera_counter;
 
-/**
- * @brief The previous MRI imaging status.
- *
- * The MRI indicates imaging by setting an input pin.
- */
-bool mriStatOld;
+///**
+// * @brief The previous MRI imaging status.
+// *
+// * The MRI indicates imaging by setting an input pin.
+// */
+//bool mriStatOld;
 
 /**
  * @brief The MR scanning duration in which the currents are turned off.
@@ -60,7 +60,6 @@ bool mriStatOld;
  * The duration is defined in scan lines.
  */
 double scanLines = 4;
-
 
 volatile unsigned long scanStartTime;
 unsigned long scanDuration;
@@ -75,6 +74,7 @@ void disableChannels()
     {
       zero(i);
     }
+  isScanning = true;
 }
 
 /**
@@ -86,7 +86,8 @@ void setup()
 	SPI_init();
 	serial_init();
 	camera_counter = 0;
-  mriStatOld = false;
+  isScanning = false;
+  //mriStatOld = false;
 
   // Here, the scanLines is converted to ms.
   // Each line takes 2.88 ms. 
@@ -147,9 +148,8 @@ void loop()
     for (int i = 0; i  < NCHANNELS; i++)
     {
       set_direction(i,channelList[i].dir);
-      //toggle_enable(i, 1);
-      
     }
+    isScanning = false;
   }
 }
 
