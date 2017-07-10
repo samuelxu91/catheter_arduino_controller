@@ -18,6 +18,11 @@
 // then add header guards
 
 /**
+ * @brief Indicate whether MR is scanning
+ */
+volatile bool isScanning;
+
+/**
  * @brief Channel status is the status of the individual catheter coil.
  *
  * The status includes the following:
@@ -90,8 +95,8 @@ int camera_write(int counter)
       // turn off the pin after the on time has passed.
       if ((mriStartTime + minOn) < currentTime)
       {
-     digitalWrite(CAMERA_PINS[2],LOW);
-      mriStartTime = 0;
+        digitalWrite(CAMERA_PINS[2],LOW);
+        mriStartTime = 0;
       }
 
       // turn off the mri pin after the on time has passed in case there was
@@ -99,8 +104,8 @@ int camera_write(int counter)
       if (mriStartTime > currentTime && currentTime > minOn )
       {
         digitalWrite(CAMERA_PINS[2],LOW);
-      mriStartTime = 0;
-       }
+        mriStartTime = 0;
+      }
     }
     else
     {
@@ -130,8 +135,8 @@ void pin_init()
     digitalWrite(ADC_CS_pins[i], !CS_EN);
     digitalWrite(DAC_CS_pins[i], !CS_EN);
     digitalWrite(DAC_LDAC_pins[i], LOW);
-    digitalWrite(H_Enable_pins[i], H_EN);  //digitalWrite(H_Enable_pins[i], !H_EN);
-    digitalWrite(H_Neg_pins[i], DIR_ON);  //digitalWrite(H_Neg_pins[i], !DIR_ON);
+    digitalWrite(H_Enable_pins[i], H_EN);
+    digitalWrite(H_Neg_pins[i], DIR_ON);
     digitalWrite(H_Pos_pins[i], DIR_ON);
   }
 
@@ -226,7 +231,10 @@ uint8_t processSingleChannel(int i, channelStatus &local_channel, uint8_t cmdVal
       local_channel.DAC_val = cmdData;
     }
     // set H-brige direction
-    set_direction(i, dir);
+    if (!isScanning)
+    {
+      set_direction(i, dir);
+    }
     local_channel.dir = dir;
 
     // assign the DAC values (upper and lower)
