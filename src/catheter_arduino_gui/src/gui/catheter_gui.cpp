@@ -16,6 +16,7 @@
 #include "catheter_arduino_gui/catheter_gui.h"
 #include "catheter_arduino_gui/pc_utils.h"
 #include "catheter_arduino_gui/serial_thread.h"
+
 #include <wx/wfstream.h>
 #include <wx/numdlg.h>
 #include <vector>
@@ -109,7 +110,7 @@ wxFrame(NULL, wxID_ANY, title)
   // control buttons (break this up into 2 rows)
 
   // row 1:
-  selectPlayfileButton_ = new wxButton(parentPanel_, ID_SELECT_PLAYFILE_BUTTON, wxT("Select Playfile"));
+  selectPlayfileButton_ = new wxButton(parentPanel_, ID_SELECT_PLAYFILE_BUTTON, wxT("Open Playfile"));
   newPlayfileButton_ = new wxButton(parentPanel_, ID_NEW_PLAYFILE_BUTTON, wxT("New Playfile"));
   savePlayfileButton_ = new wxButton(parentPanel_, ID_SAVE_PLAYFILE_BUTTON, wxT("Save Playfile"));
   pollButton_ = new wxButton(parentPanel_, ID_SEND_POLL_BUTTON, wxT("Poll Arduino"));
@@ -138,12 +139,12 @@ wxFrame(NULL, wxID_ANY, title)
   vbox->Add(buttonBox, 0, wxALL, 5);
 
   // add the status Grid
-  wxStaticBoxSizer *statusBox = new wxStaticBoxSizer(wxHORIZONTAL, parentPanel_, wxT("status information"));
+  wxStaticBoxSizer *statusBox = new wxStaticBoxSizer(wxHORIZONTAL, parentPanel_, wxT("Status Information"));
 
   statusBox->Add(statusGridPtr_);
   vbox->Add(statusBox, 1, wxALL, 5);
 
-  wxStaticBoxSizer *consoleBox = new wxStaticBoxSizer(wxVERTICAL, parentPanel_, wxT("console information"));
+  wxStaticBoxSizer *consoleBox = new wxStaticBoxSizer(wxVERTICAL, parentPanel_, wxT("Console Information"));
   consoleBox->Add(statusText_, 1, wxEXPAND | wxALL, 5);
   vbox->Add(consoleBox, 1, wxEXPAND | wxALL, 5);
 
@@ -174,28 +175,16 @@ CatheterGuiFrame::~CatheterGuiFrame()
 //////////////////////////////////
 // public event handler methods //
 //////////////////////////////////
-void CatheterGuiFrame::OnSelectPlayfileButtonClicked(wxCommandEvent& e)\
+void  CatheterGuiFrame::OnSelectPlayfileButtonClicked(wxCommandEvent& e)
 {
   warnSavePlayfile();
-
-  wxString path = openPlayfile();
-
-  if (!path.IsEmpty())
-  {
-    playfileSaved_ = false;
-    playfilePath_ = path;
-
-    grid_->ResetDefault();
-    loadPlayfile(playfilePath_);
-
-    setStatusText(wxString::Format(wxT("Editing Existing Playfile %s\n"), playfilePath_));
-  }
 }
+
 
 
 void CatheterGuiFrame::OnNewPlayfileButtonClicked(wxCommandEvent& e)
 {
-  warnSavePlayfile();
+  warnSavePlayfileforNewPlayfile();
 
   grid_->ResetDefault();
 
@@ -212,8 +201,7 @@ void CatheterGuiFrame::OnSavePlayfileButtonClicked(wxCommandEvent& e)
   if (playfileSaved_)
   {
     // save contents of edit panel to playfilePath_
-    unloadPlayfile(playfilePath_);
-    setStatusText(wxString::Format(wxT("Saved Playfile as %s"), playfilePath_));
+    savePlayfilesecond(playfilePath_);
   }
 }
 
@@ -299,24 +287,36 @@ void CatheterGuiFrame::savePlayfile()
 {
   wxString path = wxEmptyString;
   wxFileDialog saveDialog(this, wxT("Save Playfile"), wxGetCwd(),
-    "", playfile_wildcard, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+  " ", "*.play", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
   if (saveDialog.ShowModal() != wxID_CANCEL)
   {
-    wxFileOutputStream save_stream(saveDialog.GetPath());
-    if (!save_stream.IsOk())
+    wxString name = saveDialog.GetPath();
+    wxString check = name.Right(5);
+    if (check.Matches(".play"))
     {
-      wxLogError("Could not save to selected file");
+      wxFileOutputStream save_stream(name);
+      setStatusText(wxString::Format(wxT("Saved Playfile as %s"), name));
     }
     else
     {
-      path = saveDialog.GetPath();
+      name = name.Append(".play");
+      setStatusText(wxString::Format(wxT("Saved Playfile as %s"), name));
     }
+     wxFileOutputStream save_stream(name);
+       if (!save_stream.IsOk())
+       {
+        wxLogError("Could not save to selected file");
+       }
+       else
+       {
+        path = name;
+       }
   }
   if (!path.IsEmpty())
-  {
-    playfilePath_ = path;
-    playfileSaved_ = true;
-  }
+       {
+        playfilePath_ = path;
+        playfileSaved_ = true;
+       }
 }
 
 
@@ -328,7 +328,7 @@ void CatheterGuiFrame::loadPlayfile(const wxString& path)
 }
 
 
-void CatheterGuiFrame::unloadPlayfile(const wxString& path)
+void CatheterGuiFrame::savePlayfilesecond(const wxString& path)
 {
   std::vector<CatheterChannelCmdSet> gridCmds;
   grid_->GetCommands(gridCmds);
@@ -340,10 +340,41 @@ void CatheterGuiFrame::warnSavePlayfile()
 {
   if (!playfileSaved_)
   {
-    if (wxMessageBox(wxT("Current content has not been saved! Proceed?"), wxT("Warning!"),
-      wxICON_QUESTION | wxYES_NO, this) == wxNO)
+    int answer = wxMessageBox(wxT("Do you want to save the current playfile before proceeding?"), wxT("Warning!"),
+      wxICON_QUESTION | wxCANCEL | wxYES_NO, this);
+    if (answer == wxYES)
     {
       savePlayfile();
+      return;
+    }
+    if (answer == wxNO)
+    {
+       wxString path = openPlayfile();
+         if (!path.IsEmpty())
+           grid_->ResetDefault();
+           playfileSaved_ = false;
+           playfilePath_ = path;
+           loadPlayfile(playfilePath_);
+    }
+         else
+          return;
+  }
+}
+
+void CatheterGuiFrame::warnSavePlayfileforNewPlayfile()
+{
+  if (!playfileSaved_)
+  {
+    int answer = wxMessageBox(wxT("Do you want to save the current playfile before proceeding?"), wxT("Warning!"),
+      wxICON_QUESTION | wxCANCEL | wxYES_NO, this);
+    if (answer == wxYES)
+    {
+      savePlayfile();
+      if (playfileSaved_)
+      {
+        // save contents of edit panel to playfilePath_
+        savePlayfilesecond(playfilePath_);
+  }
       return;
     }
   }
@@ -432,3 +463,5 @@ wxString CatheterGuiFrame::wxToString(const CatheterChannelCmd &cmd)
 {
   return wxString::Format("channel: %d\ncurrent: %3.3f\n", cmd.channel, cmd.currentMilliAmp);
 }
+
+

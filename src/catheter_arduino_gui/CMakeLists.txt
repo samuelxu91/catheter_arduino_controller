@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 
 project(catheter_arduino_gui)
 
-find_package(catkin)
-
 find_package(Boost COMPONENTS system thread REQUIRED)
 find_package(wxWidgets COMPONENTS core base adv propgrid REQUIRED )
 find_package(GTest REQUIRED)
@@ -20,8 +18,6 @@ catkin_package(
         Boost COMPONENTS system thread
         wxWidgets COMPONENTS core base adv propgrid
 )
-
-
 
 include_directories(
 ${catkin_INCLUDE_DIRS}

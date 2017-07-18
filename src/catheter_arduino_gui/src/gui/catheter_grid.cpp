@@ -48,13 +48,13 @@
 
 #define CHANNEL_COL 0
 #define CURRENT_COL 1
-#define DIRECTION_COL 2
-#define DELAY_COL 3
+// #define DIRECTION_COL 2
+#define DELAY_COL 2
 
 #define MAX_DELAY 50000
 
 // NCHANNELS
-#define NFIELDS 4
+#define NFIELDS 3
 #define NROWS_DEFAULT 1
 
 // file definitions
@@ -62,8 +62,6 @@
 #define portfile wxT("ports.txt")
 
 // cell choice string definitions
-#define DIRNEGSTR wxT("neg")
-#define DIRPOSSTR wxT("pos")
 #define GLOBALSTR wxT("global")
 
 wxBEGIN_EVENT_TABLE(CatheterGrid, wxGrid)
@@ -106,14 +104,10 @@ void CatheterGrid::OnGridCellChanging(wxGridEvent& e)
   switch (col)
   {
   case CHANNEL_COL:
-    // setGridRowChannel(row, wxAtoi(e.GetString()));
     setGridRowChannel(row, e.GetString());
     break;
   case CURRENT_COL:
     setGridRowcurrentMilliAmp(row, wxAtof(e.GetString()));
-    break;
-  case DIRECTION_COL:
-    setGridRowDirection(row, (wxStrcmp(DIRPOSSTR, e.GetString()) ? DIR_NEG : DIR_POS));
     break;
   case DELAY_COL:
     setGridRowDelayMS(row, wxAtoi(e.GetString()));
@@ -222,31 +216,6 @@ void CatheterGrid::setGridRowcurrentMilliAmp(int row, double currentMilliAmp)
   if (isGridRowNumValid(row))
   {
     SetCellValue(wxGridCellCoords(row, CURRENT_COL), wxString::Format("%3.3f", currentMilliAmp));
-    if (currentMilliAmp > 0)
-      setGridRowDirection(row, DIR_POS);
-    else if (currentMilliAmp < 0)
-      setGridRowDirection(row, DIR_NEG);
-  }
-}
-
-
-void CatheterGrid::setGridRowDirection(int row, dir_t direction)
-{
-  if (isGridRowNumValid(row))
-  {
-    switch (direction)
-    {
-    case DIR_POS:
-      SetCellValue(wxGridCellCoords(row, DIRECTION_COL), DIRPOSSTR);
-      if (!isGridCellEmpty(row, CURRENT_COL) && getGridRowcurrentMilliAmp(row) < 0)
-        setGridRowcurrentMilliAmp(row, getGridRowcurrentMilliAmp(row) * -1);
-      break;
-    case DIR_NEG:
-      SetCellValue(wxGridCellCoords(row, DIRECTION_COL), DIRNEGSTR);
-      if (!isGridCellEmpty(row, CURRENT_COL) && getGridRowcurrentMilliAmp(row) > 0)
-        setGridRowcurrentMilliAmp(row, getGridRowcurrentMilliAmp(row) * -1);
-      break;
-    }
   }
 }
 
@@ -277,21 +246,6 @@ double CatheterGrid::getGridRowcurrentMilliAmp(int row)
 {
     return wxAtof(GetCellValue(wxGridCellCoords(row, CURRENT_COL)));
 }
-
-
-dir_t CatheterGrid::getGridRowDirection(int row)
-{
-  const wxString& dirStr = GetCellValue(wxGridCellCoords(row, DIRECTION_COL));
-  if (!wxStrcmp(dirStr, DIRPOSSTR))
-  {
-    return DIR_POS;
-  }
-  else
-  {
-    return DIR_NEG;
-  }
-}
-
 
 int CatheterGrid::getGridRowDelayMS(int row)
 {
@@ -351,7 +305,6 @@ void CatheterGrid::formatDefaultGrid(int nrows)
 {
   SetColLabelValue(CHANNEL_COL, wxT("Channel"));
   SetColLabelValue(CURRENT_COL, wxT("Current (mA)"));
-  SetColLabelValue(DIRECTION_COL, wxT("Direction"));
   SetColLabelValue(DELAY_COL, wxT("Delay (ms)"));
   // HideRowLabels();
 
@@ -390,30 +343,28 @@ void CatheterGrid::setRowReadOnly(int row, bool readOnly)
         return;
     SetReadOnly(row, CHANNEL_COL, readOnly);
     SetReadOnly(row, CURRENT_COL, readOnly);
-    SetReadOnly(row, DIRECTION_COL, readOnly);
     SetReadOnly(row, DELAY_COL, readOnly);
 }
 
 
 void CatheterGrid::formatDefaultRow(int row)
 {
-    if (row >= GetNumberRows())
-        return;
-    const wxString direction_opts[] = { DIRNEGSTR, DIRPOSSTR };
+  if (row >= GetNumberRows())
+    return;
 
-    wxString channel_opts[NCHANNELS + 1];
-    channel_opts[0] = GLOBALSTR;
-    for (int i = 1; i <= NCHANNELS; i++)
-        channel_opts[i] = wxString::Format("%d", i);
+  wxString channel_opts[NCHANNELS + 1];
 
-    SetCellEditor(row, CHANNEL_COL, new wxGridCellChoiceEditor(WXSIZEOF(channel_opts), (const wxString*)channel_opts));
-    SetCellEditor(row, CURRENT_COL, new wxGridCellFloatEditor(3, 3));
-    SetCellRenderer(row, CURRENT_COL, new wxGridCellFloatRenderer());
-    SetCellEditor(row, DIRECTION_COL, new wxGridCellChoiceEditor(WXSIZEOF(direction_opts), direction_opts));
-    SetCellEditor(row, DELAY_COL, new wxGridCellNumberEditor(0, MAX_DELAY));
-    SetCellRenderer(row, DELAY_COL, new wxGridCellNumberRenderer());
+  channel_opts[0] = GLOBALSTR;
+  for (int i = 1; i <= NCHANNELS; i++)
+    channel_opts[i] = wxString::Format("%d", i);
+
+  SetCellEditor(row, CHANNEL_COL, new wxGridCellChoiceEditor(WXSIZEOF(channel_opts), (const wxString*)channel_opts));
+  SetCellEditor(row, CURRENT_COL, new wxGridCellFloatEditor(3, 3));
+  SetCellRenderer(row, CURRENT_COL, new wxGridCellFloatRenderer());
+  SetCellEditor(row, DELAY_COL, new wxGridCellNumberEditor(0, MAX_DELAY));
+  SetCellRenderer(row, DELAY_COL, new wxGridCellNumberRenderer());
   SetCellValue(row, DELAY_COL, wxT("0"));
-    setRowReadOnly(row, true);
+  setRowReadOnly(row, true);
 }
 
 

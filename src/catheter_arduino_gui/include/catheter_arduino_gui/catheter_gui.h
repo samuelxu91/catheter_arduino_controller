@@ -27,6 +27,8 @@
 #include "catheter_arduino_gui/status_frame.h"
 #include "catheter_arduino_gui/serial_thread.h"
 #include <vector>
+#include <wx/grid.h>
+
 
 // This file defines the gui layout
 
@@ -141,6 +143,11 @@ private:
     /**
      * @brief Save the new play file
      */
+    void warnSavePlayfileforNewPlayfile();
+
+    /**
+     * @brief Save the new play file
+     */
     void savePlayfile();
 
     /**
@@ -160,15 +167,17 @@ private:
     /**
      * @TODO(rcj33) identify the purpose of this play file and if removal is necessary.
      */
-    void unloadPlayfile(const wxString& path);
+    void savePlayfilesecond(const wxString& path);
 
     /**
      * @brief Queue up commands to send to the arduino
      */
+
     bool sendCommands(const std::vector<CatheterChannelCmdSet> &cmdVect);
 
     /**
      * @brief Get the grid commands and send them.
+
      *
      * @return true/false based on success.
      */

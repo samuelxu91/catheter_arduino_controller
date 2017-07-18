@@ -26,9 +26,9 @@ StatusGrid::StatusGrid(wxPanel* parentPanel):
   wxFlexGridSizer(7, 4, 2, 10)
 {
   wxStaticText *channelIndex = new wxStaticText(parentPanel, -1, wxT("Channel #"));
-  wxStaticText *setMa = new wxStaticText(parentPanel, -1, wxT("Set Current"));
-  wxStaticText *senseMa = new wxStaticText(parentPanel, -1, wxT("Sensed Current"));
-  wxStaticText *enable = new wxStaticText(parentPanel, -1, wxT("enabled"));
+  wxStaticText *setMa = new wxStaticText(parentPanel, -1, wxT("Set Current(mA)"));
+  wxStaticText *senseMa = new wxStaticText(parentPanel, -1, wxT("Sensed Current(mA)"));
+  wxStaticText *enable = new wxStaticText(parentPanel, -1, wxT("Enabled"));
 
   this->Add(channelIndex);
   this->Add(setMa);
@@ -77,11 +77,11 @@ bool StatusGrid::updateStatus(statusData* inputData)
 
       if (inputData->inputCommands_[index].enable)
       {
-        textCtrl_[baseIndex + 3]->SetValue(wxT("true"));
+        textCtrl_[baseIndex + 3]->SetValue(wxT("True"));
       }
       else
       {
-        textCtrl_[baseIndex + 3]->SetValue(wxT("false"));
+        textCtrl_[baseIndex + 3]->SetValue(wxT("False"));
       }
     }
     inputData->updated_ = false;
