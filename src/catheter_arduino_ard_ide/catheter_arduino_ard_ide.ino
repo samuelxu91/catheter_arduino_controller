@@ -87,6 +87,7 @@ void setup()
 	serial_init();
 	camera_counter = 0;
   isScanning = false;
+  delayMaker = false;
   //mriStatOld = false;
 
   // Here, the scanLines is converted to ms.

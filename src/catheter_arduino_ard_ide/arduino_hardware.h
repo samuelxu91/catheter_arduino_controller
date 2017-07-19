@@ -14,6 +14,14 @@
    limitations under the License.
 */
 
+/*
+ * @brief delayMaker toggles itself inside a for loop that is used to create time delay
+ * 
+ * Since this program implements interruption, it is undesirable to use delayMicroseconds(), which disables interruption when executed.
+ * A for loop that toggles delayMaker during each iteration is used instead to create delays of microseconds. 
+ * 
+ */
+bool delayMaker;
 
 /* enable or disable the H-bridge on a given channel (Active LOW) */
 /**
@@ -44,11 +52,13 @@ void set_direction(int channel, int direction)
   if (direction == 0)
   {
     digitalWrite(H_Neg_pins[channel], DIR_ON);
+    for (int i = 0; i < 4000; i++) delayMaker = !delayMaker; // delay for about 200 usec to wait for the optocouplers to turn on
     digitalWrite(H_Pos_pins[channel], !DIR_ON);
   }
   else
   {
     digitalWrite(H_Pos_pins[channel], DIR_ON);
+    for (int i = 0; i < 4000; i++) delayMaker = !delayMaker; // delay for about 200 usec to wait for the optocouplers to turn on
     digitalWrite(H_Neg_pins[channel], !DIR_ON);
   }
 
