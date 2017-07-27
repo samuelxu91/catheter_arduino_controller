@@ -104,8 +104,8 @@ void SPI_init()
   // Also slow the clock down for the Due.
   SPI.begin();
 #ifdef DUE
-  // Sets the SPI clock to ~20 MHz  on the Due
-  SPI.setClockDivider(SPI_CLOCK_DIV4);
+  // Sets the SPI clock to ~1.3 MHz on the Due
+  SPI.setClockDivider(64);
 #endif
   SPI.setBitOrder(MSBFIRST);
 
