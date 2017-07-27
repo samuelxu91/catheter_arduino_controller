@@ -36,9 +36,9 @@ class CatheterGuiFrame : public wxFrame
 {
 public:
     /**
-     * @brief The catheter gui fram constructor for starting the frame up.
+     * @brief The catheter gui frame constructor for starting the frame up.
      *
-     * This rrquires a pointer to the serialthread object for communicating with the arduino.
+     * This requires a pointer to the serialthread object for communicating with the arduino.
      * @param title string of the the frame.
      * @param a pointer to the serialthread object.
      */
@@ -57,35 +57,35 @@ public:
     void OnRefreshSerialButtonClicked(wxCommandEvent& e);
 
     /**
-     * @brief Loads a new play file
+     * @brief Loads a new play file.
      *
      * @param The incomming event.
      */
     void OnSelectPlayfileButtonClicked(wxCommandEvent& e);
 
     /**
-     * @brief creates a new play file (empties the grid)
+     * @brief Opens a new play file in directory.
      *
      * @param The incomming event.
      */
     void OnNewPlayfileButtonClicked(wxCommandEvent& e);
 
     /**
-     * @brief Saves a playfile
+     * @brief Saves a playfile and open a new empty playfile.
      *
      * @param The incoming event
      */
     void OnSavePlayfileButtonClicked(wxCommandEvent& e);
 
     /**
-     * @brief Sends commands to the arduino.
+     * @brief Sends commands to the arduino. Save playfile in the directory.
      *
      * @param The incoming event
      */
     void OnSendCommandsButtonClicked(wxCommandEvent& e);
 
     /**
-     * @brief sends a reset command
+     * @brief Sends a reset command.
      *
      * @param The incoming event
      */
@@ -136,48 +136,51 @@ private:
     void setStatusText(const wxString& msg);
 
     /**
-     * @brief warn about overriting a play file
+     * @brief Warn users to save the current file when they click on open playfile button. Save the new play file. 
      */
     void warnSavePlayfile();
 
     /**
-     * @brief Save the new play file
+     * @brief Warn users to save the current file when they click on new playfile button. Save the new play file.  
      */
     void warnSavePlayfileforNewPlayfile();
 
     /**
-     * @brief Save the new play file
+     * @brief save Playfile in the directory with checking and adding correct filename. 
+     *
+     * @return a wxString path to the play file.
      */
     void savePlayfile();
 
     /**
-     * @brief open a playfile
+     * @brief load a playfile based on the input path.
      *
-     * @return a wxString path to the play file.
+     * @param the wxString path to the play file.
      */
     wxString openPlayfile();
 
     /**
-     * @brief load a playfile based on the input path
-     *
-     * @param the wxString path to the play file.
+     * @brief load the selected playfile into the grid.
+     * 
+     * @TODO(rcj33) identify the purpose of this play file and if removal is necessary.
      */
     void loadPlayfile(const wxString& path);
 
     /**
+     * @brief Save the current playfile with the correct file extension. 
+     * 
      * @TODO(rcj33) identify the purpose of this play file and if removal is necessary.
      */
     void savePlayfilesecond(const wxString& path);
 
     /**
-     * @brief Queue up commands to send to the arduino
+     * @brief Queue up commands to send to the arduino.
      */
 
     bool sendCommands(const std::vector<CatheterChannelCmdSet> &cmdVect);
 
     /**
      * @brief Get the grid commands and send them.
-
      *
      * @return true/false based on success.
      */

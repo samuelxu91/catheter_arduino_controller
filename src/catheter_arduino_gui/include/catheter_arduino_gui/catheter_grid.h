@@ -39,10 +39,26 @@ class CatheterGrid : public wxGrid
 
     void OnGridCellChanging(wxGridEvent& e);
 
+    /**
+     * @brief Set command from grid.
+     *
+     * @param The incomming event.
+     */
     void SetCommands(const std::vector<CatheterChannelCmdSet>& cmds);
-    void GetCommands(std::vector<CatheterChannelCmdSet>& cmds);
-    void ResetDefault();
 
+    /**
+     * @brief Get command from grid.
+     *
+     * @param The incomming event.
+     */
+    void GetCommands(std::vector<CatheterChannelCmdSet>& cmds);
+
+    /**
+     * @brief Reset the grid to default.
+     *
+     * @param The incomming event.
+     */
+    void ResetDefault();
     wxDECLARE_EVENT_TABLE();
 
     private:

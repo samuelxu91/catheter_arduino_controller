@@ -48,7 +48,6 @@
 
 #define CHANNEL_COL 0
 #define CURRENT_COL 1
-// #define DIRECTION_COL 2
 #define DELAY_COL 2
 
 #define MAX_DELAY 50000
