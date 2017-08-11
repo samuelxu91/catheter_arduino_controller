@@ -134,7 +134,7 @@ void pin_init()
     pinMode(DAC_LDAC_pins[i], OUTPUT);
     digitalWrite(ADC_CS_pins[i], !CS_EN);
     digitalWrite(DAC_CS_pins[i], !CS_EN);
-    digitalWrite(DAC_LDAC_pins[i], LOW);
+    digitalWrite(DAC_LDAC_pins[i], !LDAC_EN);
     digitalWrite(H_Enable_pins[i], H_EN);
     digitalWrite(H_Neg_pins[i], DIR_ON);
     digitalWrite(H_Pos_pins[i], DIR_ON);

@@ -3,6 +3,7 @@
 #define BAUD 9600
 
 #define CS_EN LOW
+#define LDAC_EN LOW
 #define H_EN LOW
 #define DIR_ON LOW
 
@@ -33,8 +34,6 @@
 
 
 #define START_DELAY 500     /* delay before first write to DAC */
-#define DAC_ADC_DELAY 500   /* delay between write to DAC and read from ADC */
-#define ADC_DAC_DELAY 500   /* delay between read from ADC and write to DAC */
 
 #define DAC_SELECT  0b00000000    /* write to DAC A;          bit 15 */
 #define INPUT_BUF   0b00000000    /* Vref input not buffered; bit 14 */

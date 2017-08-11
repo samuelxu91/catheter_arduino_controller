@@ -87,9 +87,12 @@ void DAC_write(uint8_t channel, uint16_t to_dac)
   // 1. Enable the DAC chip
   // 2. Write the 16 bits using the SPI bus
   // 3. Disable the DAC chip
+  // 4. Update DAC output
   digitalWrite(DAC_CS_pins[channel], CS_EN);
   SPI.transfer16(outputData);
   digitalWrite(DAC_CS_pins[channel], !CS_EN);
+  digitalWrite(DAC_LDAC_pins[channel], LDAC_EN);
+  digitalWrite(DAC_LDAC_pins[channel], !LDAC_EN);
 }
 
 /**
