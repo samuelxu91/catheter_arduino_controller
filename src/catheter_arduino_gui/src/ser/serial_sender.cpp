@@ -18,10 +18,14 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <boost/bind.hpp>
+#include <boost/thread.hpp>
+
+#include <serial/serial.h>
 
 #include "catheter_arduino_gui/pc_utils.h"
 #include "catheter_arduino_gui/serial_sender.h"
-#include "catheter_arduino_gui/simple_serial.h"
+
 
 #ifdef _MSC_VER
 #define _CRTDBG_MAP_ALLOC
@@ -42,7 +46,13 @@ dataChange_(false),
 responseLength_(-1)
 {
   port_name = "";
-  sp = new SerialPort();
+  sp = new serial::Serial(std::string(""),
+    9600,  // baudrate
+    serial::Timeout(),  // I don't know what this is -RCJ
+    serial::eightbits,
+    serial::parity_none,
+    serial::stopbits_one,
+    serial::flowcontrol_none);
 }
 
 
@@ -53,11 +63,7 @@ CatheterSerialSender::~CatheterSerialSender()
 }
 
 
-void CatheterSerialSender::getAvailablePorts(std::vector<std::string>& ports)
-{
-  ports.clear();
-  ports = sp->get_port_names();
-}
+
 
 
 void CatheterSerialSender::setPort(const std::string port)
@@ -77,21 +83,18 @@ std::string CatheterSerialSender::getPort()
 // should do this once when CatheterSerialSender is initialized, and again when the user requests
 // the serial connection to be refreshed. Instead of a port_name field, keep a vector<string> of
 // discovered ports, as well as a port_id (default 0) to index into ports.
-bool CatheterSerialSender::start()
+bool CatheterSerialSender::start(const serial::PortInfo &port)
 {
   commandHistory_.clear();
   if (!sp->isOpen())
   {
-    if (port_name.empty())
+    if (port.port.empty())
     {
-      std::vector<std::string> ports = sp->get_port_names();
-      if (!ports.size())
-      {
-        return false;
-      }
-      port_name = ports[0];
+      return false;
     }
-    return sp->start(port_name.c_str());
+    sp->setPort(port.port);
+    sp->open();
+    return sp->isOpen();
   }
   else
   {
@@ -103,7 +106,7 @@ bool CatheterSerialSender::start()
 bool CatheterSerialSender::stop()
 {
   commandHistory_.clear();
-  sp->stop();
+  sp->close();
   return true;
 }
 
@@ -112,12 +115,12 @@ void CatheterSerialSender::serialReset()
 {
   if (sp->isOpen())
   {
-    sp->flushData();
+    sp->read();
     boost::this_thread::sleep(boost::posix_time::milliseconds(300));
-    sp->stop();
+    sp->close();
     boost::this_thread::sleep(boost::posix_time::milliseconds(300));
+    sp->open();
   }
-  start();
 }
 
 
@@ -129,9 +132,10 @@ bool CatheterSerialSender::resetStop()
 
 bool CatheterSerialSender::dataAvailable()
 {
-  if (sp->hasData())
+  if (sp->waitReadable())
   {
-    std::vector<uint8_t> temp = sp->flushData();
+    std::vector<uint8_t> temp;
+    sp->read(temp, 512);
     bytesAvailable.insert(bytesAvailable.end(), temp.begin(), temp.end());
     this->dataChange_ = true;
   }
@@ -167,7 +171,7 @@ int CatheterSerialSender::sendCommand(const CatheterChannelCmdSet & outgoingData
   {
     // send it through the serial port:
     printf("connected and sending\n");
-    return static_cast<int> (sp->write_some_bytes(bytesOut));
+    return static_cast<int> (sp->write(bytesOut));
   }
   else
   {

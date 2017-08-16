@@ -22,8 +22,8 @@
 
 #include <vector>
 #include <string>
+#include <serial/serial.h>
 
-#include "catheter_arduino_gui/simple_serial.h"
 #include "catheter_arduino_gui/catheter_commands.h"
 
 
@@ -52,10 +52,9 @@ class CatheterSerialSender
 private:
   std::string port_name;
   // The serial port pointer of the interface?
-  SerialPort *sp;
+  serial::Serial *sp;
   std::vector< unsigned char> bytesAvailable;
-
-  std::vector<commandInformation> commandHistory_;
+std::vector<commandInformation> commandHistory_;
 
   bool dataChange_;
 
@@ -70,8 +69,7 @@ public:
   void getAvailablePorts(std::vector<std::string>& ports);
   void setPort(const std::string port);
   std::string getPort();
-  bool start(const std::string& port);
-  bool start();
+  bool start(const serial::PortInfo &port);
   bool stop();
   void serialReset();
   bool resetStop();

@@ -13,14 +13,16 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-#include "catheter_arduino_gui/serial_thread.h"
 
+#include <string>
+#include <vector>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <wx/wx.h>
 #include <wx/numdlg.h>
-#include <string>
-#include <vector>
+#include <serial/serial.h>
+#include "catheter_arduino_gui/serial_thread.h"
+
 
 #ifdef _MSC_VER
 #define _CRTDBG_MAP_ALLOC
@@ -121,6 +123,7 @@ void SerialThreadObject::setStatusGrid(statusData* newPtr)
 void SerialThreadObject::serialCommand(const ThreadCmd& incomingCommand)
 {
   // check for avaiable data:
+  printf("Got here\n");
   if (incomingCommand != noCmd)
   {
     boost::recursive_mutex::scoped_lock looplock(threadMutex_);
@@ -128,13 +131,16 @@ void SerialThreadObject::serialCommand(const ThreadCmd& incomingCommand)
     {
     case resetArduino:
     {
+      printf("reset ard\n");
       queueCommand(resetCmd(), true);
     }
     break;
     case resetSerial:
     {
+      printf("reset Serial\n");
       if (ss_->connected())
       {
+        printf("stopping\n");
         ss_->stop();
       }
       if (textStatusData_ != NULL)
@@ -142,9 +148,9 @@ void SerialThreadObject::serialCommand(const ThreadCmd& incomingCommand)
         textStatusData_->appendText(std::string("Attempting to reset Arduino Serial Connection"));
       }
       // reset the serial bus.
-      std::vector<std::string> ports;
-      ss_->getAvailablePorts(ports);
-      if (!ports.size())
+      printf("getting port info\n");
+      std::vector<serial::PortInfo> portList(serial::list_ports());
+      if (!portList.size())
       {
         if (textStatusData_ != NULL)
         {
@@ -153,32 +159,35 @@ void SerialThreadObject::serialCommand(const ThreadCmd& incomingCommand)
       }
       else
       {
-        if (ports.size() == 1)
+        serial::PortInfo selectedPort;
+        if (portList.size() == 1)
         {
-          ss_->setPort(ports[0]);
+          // @TODO Fix this line ss_->setPort(ports[0]);
           if (textStatusData_ != NULL)
           {
-            textStatusData_->appendText(std::string("Connecting to Port: ")+ports[0]);
+            textStatusData_->appendText(std::string("Connecting to Port: ") + portList[0].port);
           }
+          selectedPort = portList[0];
         }
         else
         {
           // have user select the correct port
-          for (int i = 0; i < ports.size(); i++)
+          printf("listing available ports \n");
+          for (int i = 0; i < portList.size(); i++)
           {
-            wxMessageBox(wxString::Format("Found Serial Port: %s (%d/%d)", wxString(ports[i]), i + 1, ports.size()));
+            printf("Port: %s\n", portList[i].port.c_str());
           }
+          printf("pick a port \n");
           int which_port(wxGetNumberFromUser(wxEmptyString,
-            wxT("Select Serial Port Number"), wxEmptyString, 0, 1, ports.size()) - 1);
-          wxMessageBox(wxString::Format("Selected Serial Port: %s", wxString(ports[which_port])));
-          ss_->setPort(ports[which_port]);
+            wxT("Select Serial Port Number"), wxEmptyString, 0, 1, portList.size()) - 1);
           if (textStatusData_ != NULL)
           {
-            textStatusData_ -> appendText(std::string("Connecting to Port: ")+ports[which_port]);
+            textStatusData_ -> appendText(std::string("Connecting to Port: ") + portList[which_port].port);
           }
+          selectedPort = portList[which_port];
         }
 
-        ss_->start();
+        ss_->start(selectedPort);
         if (textStatusData_ != NULL && ss_->connected())
         {
           textStatusData_->appendText(std::string("Successfully Connected!!"));
