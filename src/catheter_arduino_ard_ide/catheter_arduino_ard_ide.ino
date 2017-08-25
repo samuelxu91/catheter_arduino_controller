@@ -72,7 +72,9 @@ void disableChannels()
   scanStartTime = millis();
   for (int i = 0; i < NCHANNELS; i++)
     {
-      zero(i);
+      toggle_enable(i, !H_EN);
+      openH(i);
+      // zero(i);
     }
   isScanning = true;
 }
@@ -87,7 +89,6 @@ void setup()
 	serial_init();
 	camera_counter = 0;
   isScanning = false;
-  delayMaker = false;
   //mriStatOld = false;
 
   // Here, the scanLines is converted to ms.
@@ -149,6 +150,7 @@ void loop()
     for (int i = 0; i  < NCHANNELS; i++)
     {
       set_direction(i,channelList[i].dir);
+      toggle_enable(i, H_EN);
     }
     isScanning = false;
   }

@@ -14,14 +14,6 @@
    limitations under the License.
 */
 
-/*
- * @brief delayMaker toggles itself inside a for loop that is used to create time delay
- * 
- * Since this program implements interruption, it is undesirable to use delayMicroseconds(), which disables interruption when executed.
- * A for loop that toggles delayMaker during each iteration is used instead to create delays of microseconds. 
- * 
- */
-bool delayMaker;
 
 /* enable or disable the H-bridge on a given channel (Active LOW) */
 /**
@@ -30,13 +22,9 @@ bool delayMaker;
  * @param channel The H-bridge channel to be enable/disable.
  * @param en This is set to 1 if the H-bridge is to be enable, set to 0 otherwise.
  */
-void toggle_enable(int channel, int en) {
-  if (en == 0) {  // disable 
-    digitalWrite(H_Enable_pins[channel], !H_EN);
-  }
-  else {  // enable 
-    digitalWrite(H_Enable_pins[channel], H_EN);
-  }
+void toggle_enable(int channel, int en)
+{
+  digitalWrite(H_Enable_pins[channel], en);
 }
 
 
@@ -52,13 +40,11 @@ void set_direction(int channel, int direction)
   if (direction == 0)
   {
     digitalWrite(H_Neg_pins[channel], DIR_ON);
-    for (int i = 0; i < 4000; i++) delayMaker = !delayMaker; // delay for about 200 usec to wait for the optocouplers to turn on
     digitalWrite(H_Pos_pins[channel], !DIR_ON);
   }
   else
   {
     digitalWrite(H_Pos_pins[channel], DIR_ON);
-    for (int i = 0; i < 4000; i++) delayMaker = !delayMaker; // delay for about 200 usec to wait for the optocouplers to turn on
     digitalWrite(H_Neg_pins[channel], !DIR_ON);
   }
 
@@ -72,6 +58,16 @@ void zero(int channel)
   digitalWrite(H_Pos_pins[channel], DIR_ON);
 
 }
+
+// Opens the channel completely
+void openH(int channel)
+{
+  
+  digitalWrite(H_Neg_pins[channel], !DIR_ON);
+  digitalWrite(H_Pos_pins[channel], !DIR_ON);
+
+}
+
 /** 
  * @brief translate the 16 bit SPI data received from the MCP3201 ADC to the 12 bits sent to the PC 
  *
