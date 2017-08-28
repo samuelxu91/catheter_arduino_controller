@@ -72,9 +72,9 @@ void disableChannels()
   scanStartTime = millis();
   for (int i = 0; i < NCHANNELS; i++)
     {
-      toggle_enable(i, !H_EN);
-      openH(i);
-      // zero(i);
+      //toggle_enable(i, !H_EN);
+      //openH(i);
+      zero(i);
     }
   isScanning = true;
 }
@@ -150,7 +150,7 @@ void loop()
     for (int i = 0; i  < NCHANNELS; i++)
     {
       set_direction(i,channelList[i].dir);
-      toggle_enable(i, H_EN);
+      //toggle_enable(i, H_EN);
     }
     isScanning = false;
   }
