@@ -72,9 +72,7 @@ void disableChannels()
   scanStartTime = millis();
   for (int i = 0; i < NCHANNELS; i++)
     {
-      //toggle_enable(i, !H_EN);
-      //openH(i);
-      zero(i);
+      set_enable(i, !H_EN);
     }
   isScanning = true;
 }
@@ -92,8 +90,8 @@ void setup()
   //mriStatOld = false;
 
   // Here, the scanLines is converted to ms.
-  // Each line takes 2.88 ms. 
-  // The arduino turn off delay of 0.5 ms is also added.
+  // Each line takes 2.88 ms.
+  // Also, the scan duration includes a 0.5 ms delay to wait for the current to be completely turned off
   scanDuration = ceil(scanLines*2.88+0.5);
 
   for ( int i = 0; i < 512; i++)
@@ -150,7 +148,7 @@ void loop()
     for (int i = 0; i  < NCHANNELS; i++)
     {
       set_direction(i,channelList[i].dir);
-      //toggle_enable(i, H_EN);
+      set_enable(i, H_EN);
     }
     isScanning = false;
   }

@@ -3,8 +3,8 @@
 #define BAUD 9600
 
 #define CS_EN LOW
-#define H_EN LOW
-#define DIR_ON LOW
+#define H_EN HIGH
+#define DIR_ON HIGH
 
 #define GLOBAL_ADDR 0
 

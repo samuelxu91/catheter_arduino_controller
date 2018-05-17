@@ -30,10 +30,11 @@ int ADC_CS_pins[NCHANNELS] = {8, 9, 10, 11, 12, 13};
 int H_Enable_pins[NCHANNELS] = {22, 23, 24, 25, 26, 27};
 
 // H_ neg pins
-int H_Neg_pins[NCHANNELS] = {34, 35, 36, 37, 38, 39};
+int H_Neg_pins[NCHANNELS] = {28, 29, 30, 31, 32, 33};
 
 // H_pos pins
-int H_Pos_pins[NCHANNELS] = {28, 29, 30, 31, 32, 33};
+int H_Pos_pins[NCHANNELS] = {34, 35, 36, 37, 38, 39};
+
 
 // DAC buffer load pins
 // (held low auto loads input buffer) (high to low loads input buffer).
